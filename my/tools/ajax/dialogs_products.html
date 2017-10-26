@@ -1,0 +1,339 @@
+<?php
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update product
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddProduct'){
+ $Data = array(
+ 'manufacturer_id' => '',
+ 'product_id' => $_REQUEST['ProductID'],
+ 'type' => '',
+ 'is_new' => 0,
+ 'horeca' => 0,
+ 'article' => '',
+ 'packaging' => '',
+ 'netto' => '',
+ 'items_per_box' => '',
+ 'netto_box' => '',
+ 'brutto_box' => '',
+ 'box_per_palete' => '',
+ 'customs_code' => '',
+ 'best_before' => '',
+ 'code_item' => '',
+ 'code_box' => '',
+ 'item_length' => '',
+ 'item_width' => '',
+ 'item_height' => '',
+ 'box_width' => '',
+ 'box_length' => '',
+ 'box_width' => '',
+ 'box_height' => '',
+ 'box_per_layer' => '',
+ 'total_layers' => '',
+ 'palete_height' => '',
+ 'block_status' => '',
+ 'notes' => '',
+ 'tags' => '',
+ 'image_list' => '',
+ 'manufacturers' => Table2Arr("SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers WHERE lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY name",'name','manufacturer_id','block_status'),
+ 'dialog_title' => tr('TITLE_ADD_PRODUCT',0)
+ );
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Data['product_'.$Key] = $Data['row_'.$Key] = ''; 
+  $Data['description_'.$Key] = $Data['composition_'.$Key] = $Data['allergens_'.$Key] = '';
+  
+  }
+  
+  if($Data['product_id'] != ''){
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE product_id=".(int)$Data['product_id']." AND lang_id=".(int)$Lang['VALUE'];
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+    $Data['row_'.$Key] = $Ds[0]['id'];
+	$Data['article'] = $Ds[0]['article'];
+	$Data['manufacturer_id'] = $Ds[0]['manufacturer_id'];
+    $Data['product_'.$Key] = TextFromDBForm($Ds[0]['product']);
+	$Data['type'] = TextFromDBForm($Ds[0]['type']);
+	$Data['description_'.$Key] = TextFromDBForm($Ds[0]['description']);
+	$Data['composition_'.$Key] = TextFromDBForm($Ds[0]['composition']);
+	$Data['allergens_'.$Key] = TextFromDBForm($Ds[0]['allergens']);
+    $Data['is_new'] = $Ds[0]['is_new'];
+    $Data['horeca'] = $Ds[0]['horeca'];
+	$Data['packaging'] = $Ds[0]['packaging'];
+    $Data['netto'] = $Ds[0]['netto'];
+	$Data['items_per_box'] = $Ds[0]['items_per_box'];
+    $Data['netto_box'] = $Ds[0]['netto_box'];
+	$Data['brutto_box'] = $Ds[0]['brutto_box'];
+    $Data['box_per_palete'] = $Ds[0]['box_per_palete'];
+    $Data['customs_code'] = $Ds[0]['customs_code'];
+	$Data['best_before'] = $Ds[0]['best_before'];
+    $Data['code_item'] = $Ds[0]['code_item'];
+    $Data['code_box'] = $Ds[0]['code_box'];
+    $Data['item_length'] = $Ds[0]['item_length'];
+    $Data['item_width'] = $Ds[0]['item_width'];
+    $Data['item_height'] = $Ds[0]['item_height'];
+    $Data['box_length'] = $Ds[0]['box_length'];
+    $Data['box_width'] = $Ds[0]['box_width'];
+    $Data['box_height'] = $Ds[0]['box_height'];
+    $Data['box_per_layer'] = $Ds[0]['box_per_layer'];
+    $Data['total_layers'] = $Ds[0]['total_layers'];
+    $Data['palete_height'] = $Ds[0]['palete_height'];
+    $Data['block_status'] = $Ds[0]['block_status'];
+    $Data['dialog_title'] = $Ds[0]['product'];
+    $Data['notes'] = TextFromDBForm($Ds[0]['notes']);
+    $Tmp = explode(',',trim($Ds[0]['tags']));
+	 foreach($Tmp as $SubKey => $Value){
+	  if($Value != ''){
+     $Data['tags'] .= '<div class="message-item ui-accordion-header ui-state-default ui-corner-all"><span class="text">'.$Value.'</span><span class="ui-icon ui-icon-close"><!----></span></div>';
+	  }
+	 }
+	}
+   }
+
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='product' AND module_id=".(int)$Data['product_id'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $NR=$SQL->rows;
+  $CR=0;
+   while($CR<$NR){
+   $Data['image_list'] .= '
+   <div class="gallery-picture ui-corner-all">
+    <div class="gallery-picture-image"><a rel="group1" href="'.$Ds[$CR]['picture'].'" title=""><img src="/my/tools/thumb.html?src='.$Ds[$CR]['picture'].'&amp;ass=x&amp;size=100"/></a></div>
+    <div class="gallery-picture-footer ui-corner-bl ui-corner-br">
+    <span class="gallery-picture-icon"><span class="ui-icon ui-icon-trash cursor-pointer"><!----></span></span>
+    <span class="gallery-picture-icon"><span class="ui-icon ui-icon-comment cursor-pointer"><!----></span></span>
+   ';
+   
+    foreach($MYVAR['LANGS'] as $Key => $Lang){
+    $Text = $Title = '';
+    $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id=".(int)$Ds[$CR]['id']." AND lang_id=".(int)$Lang['VALUE'];
+	$DsL=$SQL->Select($Query);
+     if($DsL){
+	 $Text = TextFromDBForm($DsL[0]['text']);
+	 $Title = TextFromDBForm($DsL[0]['title']);
+	 }
+    $Data['image_list'] .= '
+    <input type="hidden" name="Lang_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+	<input type="text" name="Title_'.$Key.'" value="'.$Title.'"/>
+    <textarea rows="5" cols="50" name="Text_'.$Key.'">'.$Text.'</textarea>
+    ';
+    }
+ 
+   $Data['image_list'] .= '
+    <input type="hidden" name="PictureID" value="'.$Ds[$CR]['id'].'"/>
+    </div>
+   </div>
+   ';
+   $CR++;
+   }
+  }
+  
+  }
+  
+  $tmpOut = '
+ <form name="ActionForm" action="" method="post">
+ <table class="table-class1 width100p">
+ <tr><td>'.tr('STR_ARTICLE').'</td><td><input type="text" name="Article" value="'.$Data['article'].'" class="Design width100"/></td></tr>
+ <tr>
+ <td>'.tr('STR_MANUFACTURER').'</td>
+ <td><select name="ManufacturerID" class="Design">
+ <option value=""><!----></option>
+ ';
+  foreach($Data['manufacturers'] AS $Key => $Value){
+  $Text = ((int)$Value['block_status'] == 1) ? ' ('.tr('STR_BLOCK_STATUS_1').')' : '';
+  $tmpOut .= '<option value="'.$Value['VALUE'].'"'.CheckSelect($Value['VALUE'],$Data['manufacturer_id']).'>'.$Value['TEXT'].$Text.'</option>';
+  }
+ $tmpOut .= '
+ </select> *</td>
+ </tr>
+ ';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $tmpOut .= '
+ <tr><td>'.tr('STR_PRODUCT').' ('.$Lang['lang_short'].')</td><td><input type="text" name="Product_'.$Key.'" value="'.$Data['product_'.$Key].'" class="Design width300"/> *
+ <input type="hidden" name="LangID_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+ <input type="hidden" name="RowID_'.$Key.'" value="'.$Data['row_'.$Key].'"/>
+ </td></tr>
+ ';
+ }
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $tmpOut .= ' 
+ <tr><td>'.tr('STR_DESCRIPTION').' ('.$Lang['lang_short'].')</td><td><textarea class="Design standard" name="Description_'.$Key.'">'.$Data['description_'.$Key].'</textarea></td></tr> 
+ ';
+ }
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $tmpOut .= ' 
+ <tr><td>'.tr('STR_COMPOSITION').' ('.$Lang['lang_short'].')</td><td><textarea class="Design standard" name="Composition_'.$Key.'">'.$Data['composition_'.$Key].'</textarea></td></tr> 
+ ';
+ }
+ 
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $tmpOut .= ' 
+ <tr><td>'.tr('STR_ALLERGENS').' ('.$Lang['lang_short'].')</td><td><input type="text" class="Design width200" name="Allergens_'.$Key.'" value="'.$Data['allergens_'.$Key].'"/></td></tr> 
+ ';
+ }
+ 
+ $tmpOut .= '
+ <tr><td>'.tr('STR_PRODUCT_TYPE').'</td>
+ <td>
+ <select name="Type" class="Design">
+ <option value=""><!----></option>
+ <option value="muesli"'.CheckSelect('muesli',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_MUESLI',0).'</option>
+ <option value="cereals"'.CheckSelect('cereals',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_CEREALS',0).'</option>
+ <option value="bar"'.CheckSelect('bar',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_BAR',0).'</option>
+ <option value="jam"'.CheckSelect('jam',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_JAM',0).'</option>
+ <option value="breadcrumbs"'.CheckSelect('breadcrumbs',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_BREADCRUMBS',0).'</option>
+ <option value="breadingmix"'.CheckSelect('breadingmix',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_BREADINGMIX',0).'</option>
+ <option value="croutons"'.CheckSelect('croutons',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_CROUTONS',0).'</option>
+ <option value="crispbread"'.CheckSelect('crispbread',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_CRISPBREAD',0).'</option>
+ <option value="chocolate"'.CheckSelect('chocolate',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_CHOCOLATE',0).'</option>
+ <option value="chocolates"'.CheckSelect('chocolates',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_CHOCOLATES',0).'</option>
+ <option value="cookies"'.CheckSelect('cookies',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_COOKIES',0).'</option>
+ <option value="waffles"'.CheckSelect('waffles',$Data['type']).'>'.tr('STR_PRODUCT_TYPE_WAFFLES',0).'</option>
+ 
+ 
+ </select> *</td>
+ </tr>
+ <tr><td>'.tr('STR_NEW_PRODUCT').'</td><td>
+ '.tr('STR_YES').' <input type="radio" name="IsNew" value="1"'.CheckRadio($Data['is_new'],1).'/> 
+ '.tr('STR_NO').' <input type="radio" name="IsNew" value="0"'.CheckRadio($Data['is_new'],0).'/>
+ </td></tr>
+ <tr><td>'.tr('STR_PRODUCT_HORECA').'</td><td>
+ '.tr('STR_YES').' <input type="radio" name="Horeca" value="1"'.CheckRadio($Data['horeca'],1).'/> 
+ '.tr('STR_NO').' <input type="radio" name="Horeca" value="0"'.CheckRadio($Data['horeca'],0).'/>
+ </td></tr>
+ <tr><td>'.tr('STR_PACKAGING').'</td>
+ <td>
+ <select name="Packaging" class="Design">
+ <option value=""><!----></option>
+ ';
+  for($i=1;$i<=8;$i++) $tmpOut .= '<option value="'.$i.'"'.CheckSelect($i,$Data['packaging']).'>'.tr('STR_PACKAGING_'.$i,0).'</option>';
+ $tmpOut .= '
+ </select> *</td>
+ </tr>
+ <tr><td>'.tr('STR_WEIGHT_NETTO').'</td><td><input type="text" name="Netto" value="'.$Data['netto'].'" class="Design width50"/></td></tr>
+ <tr><td>'.tr('STR_ITEMS_PER_BOX').'</td><td><input type="text" name="ItemsPerBox" value="'.$Data['items_per_box'].'" class="Design width50"/></td></tr>
+ <tr><td>'.tr('STR_BOX_WEIGHT_NETTO').'</td><td><input type="text" name="NettoBox" value="'.$Data['netto_box'].'" class="Design width50"/></td></tr>
+ <tr><td>'.tr('STR_BOX_WEIGHT_BRUTTO').'</td><td><input type="text" name="BruttoBox" value="'.$Data['brutto_box'].'" class="Design width50"/></td></tr>
+ <tr><td>'.tr('STR_BOX_PER_PALETE').'</td><td><input type="text" name="BoxPerPalete" value="'.$Data['box_per_palete'].'" class="Design width50"/></td></tr>
+ <tr><td>'.tr('STR_CODE_CUSTOMS').'</td><td><input type="text" name="CustomsCode" value="'.$Data['customs_code'].'" class="Design width300"/></td></tr>
+ <tr><td>'.tr('STR_BEST_BEFORE').'</td><td><input type="text" name="BestBefore" value="'.$Data['best_before'].'" class="Design width50"/></td></tr>
+ <tr><td>'.tr('STR_CODE_ITEM').'</td><td><input type="text" name="CodeItem" value="'.$Data['code_item'].'" class="Design width300"/></td></tr>
+ <tr><td>'.tr('STR_CODE_BOX').'</td><td><input type="text" name="CodeBox" value="'.$Data['code_box'].'" class="Design width300"/></td></tr>
+ <tr><td>'.tr('STR_ITEM_LENGTH').'</td><td><input type="text" name="ItemLength" value="'.$Data['item_length'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_ITEM_WIDTH').'</td><td><input type="text" name="ItemWidth" value="'.$Data['item_width'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_ITEM_HEIGHT').'</td><td><input type="text" name="ItemHeight" value="'.$Data['item_height'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_BOX_LENGTH').'</td><td><input type="text" name="BoxLength" value="'.$Data['box_length'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_BOX_WIDTH').'</td><td><input type="text" name="BoxWidth" value="'.$Data['box_width'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_BOX_HEIGHT').'</td><td><input type="text" name="BoxHeight" value="'.$Data['box_height'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_BOX_PER_LAYER').'</td><td><input type="text" name="BoxPerLayer" value="'.$Data['box_per_layer'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_TOTAL_LAYERS').'</td><td><input type="text" name="TotalLayers" value="'.$Data['total_layers'].'" class="Design width100"/></td></tr>
+ <tr><td>'.tr('STR_PALETE_HEIGHT').'</td><td><input type="text" name="PaleteHeight" value="'.$Data['palete_height'].'" class="Design width200"/></td></tr>
+ <tr>
+ <td>'.tr('STR_BLOCK_STATUS').'</td>
+ <td>
+ <select name="BlockStatus" class="Design">
+ <option value=""><!----></option>
+ <option value="0"'.CheckSelect('0',$Data['block_status']).'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+ <option value="1"'.CheckSelect('1',$Data['block_status']).'>'.tr('STR_BLOCK_STATUS_1',0).'</option>
+ </select> *</td>
+ </tr>
+ <tr>
+ <td>'.tr('STR_TAGS').'</td> 
+ <td><div style="display:table"><span id="id-tags">'.$Data['tags'].'</span></div><div style="display:table"><input type="text" name="TagsEnter" value="" class="Design width100"/></div></td> 
+ </tr>
+ <tr>
+ <td class="table-row1 " colspan="2">'.tr('STR_LIST_OF_PICTURES').'</td>
+ </tr>
+ <tr>
+ <td class="table-row1 text-center" colspan="2" id="product-pics">'.$Data['image_list'].'</td>
+ </tr>
+ <tr>
+ <td class="table-row1 text-center" colspan="2">
+ '.myButton(array('text'=>tr('BTTN_QUICK_VIEW',0),'onclick'=>'showFileTree({\'title\' : \''.tr('STR_QUICK_VIEW',0).'\', \'target\' : \'#product-pics\'});')).' 
+ </td>
+ </tr>
+ <tr>
+ <td class="text-top">'.tr('STR_NOTES').'</td>
+ <td colspan="2"><textarea name="Notes" class="Design standard">'.$Data['notes'].'</textarea></td>
+ </tr>
+ </table>
+ <input type="hidden" name="ProductID" value="'.$Data['product_id'].'"/>
+ <input type="hidden" name="TotalLangs" value="'.sizeof($MYVAR['LANGS']).'"/>
+ </form>
+ ';
+ 
+ $Out['dialog']['text'] = $tmpOut;  
+ $Out['dialog']['title'] = $Data['dialog_title'];
+ }
+
+
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update manufacturer
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddManufacturer'){
+ $Data = array(
+ 'manufacturer_id' => ((isset($_REQUEST['ManufacturerID']) && $_REQUEST['ManufacturerID'] != '') ? $_REQUEST['ManufacturerID'] : ''),
+ 'country' => '',
+ 'country_numeric' => '',
+ 'country_iso' => '',
+ 'block_status' => '',
+ 'notes' => '',
+ 'dialog_title' => tr('TITLE_ADD_MANUFACTURER', 0)
+ );
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){$Data['name_'.$Key] = $Data['row_'.$Key] = '';}
+
+  if($Data['manufacturer_id'] != ''){
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers WHERE manufacturer_id=".(int)$Data['manufacturer_id']." AND lang_id=".(int)$Lang['VALUE'];
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+    $Data['row_'.$Key] = $Ds[0]['id'];
+	$Data['name_'.$Key] = TextFromDBForm($Ds[0]['name']);
+    $Data['country'] = TextFromDBForm($Ds[0]['country']);
+    $Data['country_numeric'] = TextFromDBForm($Ds[0]['country_numeric']);
+    $Data['country_iso'] = TextFromDBForm($Ds[0]['country_iso']);
+    $Data['block_status'] = $Ds[0]['block_status'];
+    $Data['notes'] = TextFromDBForm($Ds[0]['notes']);
+    $Data['dialog_title'] = TextFromDB($Ds[0]['name']);
+	}
+   }
+  }   
+   
+  $tmpOut = '
+  <form name="ActionForm" action="" method="post">
+  <table class="table-class1 width100p">
+  ';
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $tmpOut .= '
+  <tr><td>'.tr('STR_MANUFACTURER').' ('.$Lang['lang_short'].')</td><td><input type="text" name="Name_'.$Key.'" class="Design width200" value="'.$Data['name_'.$Key].'"/> *</td></tr>
+  ';
+  }
+  $tmpOut .= '
+  <tr><td>'.tr('STR_COUNTRY').'</td><td><input type="text" name="Country" class="Design width100" value="'.$Data['country'].'"/> *</td></tr>
+  <tr><td>'.tr('STR_COUNTRY_CODE').'</td><td><input type="text" name="CountryNumeric" class="Design width50" value="'.$Data['country_numeric'].'"/> *</td></tr>
+  <tr><td>'.tr('STR_COUNTRY_ISO_FULL').'</td><td><input type="text" name="CountryIso" class="Design width50" value="'.$Data['country_iso'].'"/> *</td></tr>
+  <tr><td>'.tr('STR_BLOCK_STATUS').'</td><td>
+  <select name="BlockStatus" class="Design">
+  <option value=""><!----></option>
+  <option value="0"'.CheckSelect($Data['block_status'],'0').'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+  <option value="1"'.CheckSelect($Data['block_status'],'1').'>'.tr('STR_BLOCK_STATUS_1',1).'</option>
+  </select> *
+  </td>
+  </tr>
+  <tr><td valign="top">'.tr('STR_NOTES').'</td><td><textarea class="Design standard" name="Notes">'.$Data['notes'].'</textarea></td></tr>
+  </table>
+  ';
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+   $tmpOut .= '
+   <input type="hidden" name="RowID_'.$Key.'" value="'.$Data['row_'.$Key].'"/>
+   ';
+   }
+   $tmpOut .= '
+  </form>
+  ';
+  $Out['dialog']['text'] = $tmpOut;
+  $Out['dialog']['title'] = $Data['dialog_title'];
+  } 
+?>

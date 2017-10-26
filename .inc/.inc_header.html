@@ -1,0 +1,57 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_cache.html';
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_functions.html';
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_actions.html';
+
+$a = getCacheLangVars();
+$a = array_unique($a);
+$lg = array();
+ foreach($a AS $Key => $Value){
+ $Translation = tr($Value, 0);
+ $lg[$Value] = $Translation; 
+ }
+$lg_json = json_encode($lg);
+
+
+echo'
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"  >
+<head>
+<title>DISTRADE ::</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<link href="//fonts.googleapis.com/css?family=Open+Sans:400,300,700&amp;subset=latin,cyrillic" rel="stylesheet" type="text/css" />
+<link type="text/css" href="/scripts/jquery-ui/jquery-ui-1.10.3.custom.css" rel="Stylesheet" />
+<link rel="stylesheet" href="/css/global.css" type="text/css" />
+
+<link type="text/css" href="/scripts/fancybox/jquery.fancybox.css" rel="Stylesheet" />
+<link type="text/css" href="/scripts/fancybox/helpers/jquery.fancybox-buttons.css" rel="Stylesheet" />
+<link type="text/css" href="/scripts/fancybox/helpers/jquery.fancybox-thumbs.css" rel="Stylesheet" />
+
+
+
+<script language="javascript" type="text/javascript" src="/scripts/jquery-1.10.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/jquery-ui/jquery-ui-1.10.3.custom.min.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/jquery.mousewheel-3.0.6.pack.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/ddsmoothmenu.js"></script>
+
+<script type="text/javascript" src="/scripts/fancybox/jquery.fancybox.js"></script>
+<script type="text/javascript" src="/scripts/fancybox/helpers/jquery.fancybox-buttons.js"></script>
+<script type="text/javascript" src="/scripts/fancybox/helpers/jquery.fancybox-thumbs.js"></script>
+
+<script language="javascript" type="text/javascript" src="/scripts/init.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/functions.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/slides.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/news.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/users.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/gallery.js"></script>
+<script language="javascript" type="text/javascript" src="/scripts/products.js"></script>
+<script language="javascript" type="text/javascript">
+var vars = {\'url\' : \''.$MYVAR['HTTP'].'\', \'timeout\' : {\'slides\' : 10, \'news\' : 15}};
+var lg = '.$lg_json.';
+</script>
+</head>
+<body>
+';
+?>

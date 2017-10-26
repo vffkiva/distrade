@@ -1,0 +1,353 @@
+<?php
+$Modules = array(
+	'TOP' => array(),
+	'TOPavailable' => array(),
+	'CENTER' => array(),
+	'CENTERavailable' => array(),
+	'BOTTOM' => array(),
+	'BOTTOMavailable' => array()
+	);
+	
+
+
+$Modules['TOPavailable'][0]['module-title'] = tr('STR_MODULE_TITLE_NEWS_ALL');
+$Modules['TOPavailable'][0]['module-unique'] = 1;
+$Modules['TOPavailable'][0]['module-params'] = array('module_id' => '','module_type' => 'all-news');
+$Modules['TOPavailable'][0]['module-text'] = tr('STR_MODULE_TEXT_NEWS_ALL');
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND block_status=0 AND description!=''";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['TOPavailable']);
+ $Modules['TOPavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_NEWS');
+ $Modules['TOPavailable'][$Nr]['module-unique'] = 1;
+ $Modules['TOPavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'news');
+ $Modules['TOPavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_NEWS');
+ } 
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE lang_id=".$MYVAR['LANG_ID']." AND block_status=0 AND description!='' AND FIND_IN_SET('top',position)>0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['TOPavailable']);
+ $Modules['TOPavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_MODULES');
+ $Modules['TOPavailable'][$Nr]['module-unique'] = 1;
+ $Modules['TOPavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'module');
+ $Modules['TOPavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_MODULES');
+ }
+
+
+$Query = "SELECT t2.id FROM ".$MYVAR['MYSQL']['PREFIX']."banners AS t1 LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."banner_details AS t2 ON t1.id=t2.banner_id WHERE t2.lang_id=".$MYVAR['LANG_ID']." AND t1.block_status=0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['TOPavailable']);
+ $Modules['TOPavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_BANNERS');
+ $Modules['TOPavailable'][$Nr]['module-unique'] = 1;
+ $Modules['TOPavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'banner');
+ $Modules['TOPavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_BANNERS');
+ }
+ 
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND block_status=0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['CENTERavailable']);
+ $Modules['CENTERavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_NEWS');
+ $Modules['CENTERavailable'][$Nr]['module-unique'] = 0;
+ $Modules['CENTERavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'news');
+ $Modules['CENTERavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_NEWS');
+ } 
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE lang_id=".$MYVAR['LANG_ID']." AND block_status=0 AND description!='' AND FIND_IN_SET('center',position)>0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['CENTERavailable']);
+ $Modules['CENTERavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_MODULES');
+ $Modules['CENTERavailable'][$Nr]['module-unique'] = 0;
+ $Modules['CENTERavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'module');
+ $Modules['CENTERavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_MODULES');
+ }
+
+ 
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE lang_id=".$MYVAR['LANG_ID']." AND block_status=0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['CENTERavailable']);
+ $Modules['CENTERavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_PRODUCTS');
+ $Modules['CENTERavailable'][$Nr]['module-unique'] = 0;
+ $Modules['CENTERavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'product');
+ $Modules['CENTERavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_PRODUCTS'); 
+ }
+ 
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND preview_text!='' ORDER BY title";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['CENTERavailable']);
+ $Modules['CENTERavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_SECTIONS');
+ $Modules['CENTERavailable'][$Nr]['module-unique'] = 0;
+ $Modules['CENTERavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'section');
+ $Modules['CENTERavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_SECTIONS');
+ }
+ 
+
+$Query = "SELECT t2.id FROM ".$MYVAR['MYSQL']['PREFIX']."banners AS t1 LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."banner_details AS t2 ON t1.id=t2.banner_id WHERE t2.lang_id=".$MYVAR['LANG_ID']." AND t1.block_status=0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['CENTERavailable']);
+ $Modules['CENTERavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_BANNERS');
+ $Modules['CENTERavailable'][$Nr]['module-unique'] = 1;
+ $Modules['CENTERavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'banner');
+ $Modules['CENTERavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_BANNERS');
+ } 
+ 
+ 
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND block_status=0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['BOTTOMavailable']);
+ $Modules['BOTTOMavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_NEWS');
+ $Modules['BOTTOMavailable'][$Nr]['module-unique'] = 0;
+ $Modules['BOTTOMavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'news');
+ $Modules['BOTTOMavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_NEWS');
+ } 
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE lang_id=".$MYVAR['LANG_ID']." AND block_status=0 AND description!='' AND FIND_IN_SET('bottom',position)>0";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Nr = count($Modules['BOTTOMavailable']);
+ $Modules['BOTTOMavailable'][$Nr]['module-title'] = tr('STR_TITLE_ONE_OF_THE_MODULES');
+ $Modules['BOTTOMavailable'][$Nr]['module-unique'] = 0;
+ $Modules['BOTTOMavailable'][$Nr]['module-params'] = array('module_id' => '','module_type' => 'module');
+ $Modules['BOTTOMavailable'][$Nr]['module-text'] = tr('STR_TEXT_ONE_OF_THE_MODULES');
+ }
+
+ 
+$TOP = $CENTER = $BOTTOM = $TOPavailable = $CENTERavailable = $BOTTOMavailable = '';
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE lang_id='".$MYVAR['LANG_ID']."'";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+  foreach($Ds as $Key => $Value){
+  $ModuleTitle = $ModuleText = $ModuleUnique = '';
+  $ModuleParams = json_decode($Value['module_params'],true);
+
+   if($ModuleParams['module_type'] == 'all-news') {
+   $ModuleTitle = tr('STR_MODULE_TITLE_NEWS_ALL');
+   $ModuleText = tr('STR_MODULE_TEXT_NEWS_ALL');
+   $ModuleUnique = 1;
+   }
+  
+   if($ModuleParams['module_type'] == 'news'){
+   $ModuleTitle = tr('STR_TITLE_ONE_OF_THE_NEWS');
+   $ModuleText = $Value['module_text'];
+   $ModuleUnique = ($Value['position'] == 'TOP') ? 1 : 0;
+   }
+
+   if($ModuleParams['module_type'] == 'module') {
+   $ModuleTitle = tr('STR_TITLE_ONE_OF_THE_MODULES');
+   $ModuleText = $Value['module_text'];
+   $ModuleUnique = ($Value['position'] == 'TOP') ? 1 : 0;
+   }
+
+   if($ModuleParams['module_type'] == 'banner') {
+   $ModuleTitle = tr('STR_TITLE_ONE_OF_THE_BANNERS');
+   $ModuleText = $Value['module_text'];
+   $ModuleUnique = ($Value['position'] == 'TOP') ? 1 : 0;
+   }
+   
+   if($ModuleParams['module_type'] == 'product') {
+   $ModuleTitle = tr('STR_TITLE_ONE_OF_THE_PRODUCTS');
+   $ModuleText = $Value['module_text'];
+   $ModuleUnique = 0;
+   }
+   
+   if($ModuleParams['module_type'] == 'section') {
+   $ModuleTitle = tr('STR_TITLE_ONE_OF_THE_SECTIONS');
+   $ModuleText = $Value['module_text'];
+   $ModuleUnique = 0;
+   }
+
+   
+   if($ModuleUnique == 1){
+   $ForCheck = 'type:'.$ModuleParams['module_type'];
+   $CheckKey = searchForModule($ForCheck,$Modules[$Value['position'].'available']);
+
+   if($CheckKey != 9999){
+    $Modules[$Value['position'].'available'] = akrem($Modules[$Value['position'].'available'],$CheckKey);
+    }
+   }
+   
+  $Nr = count($Modules[$Value['position']]);
+  $Modules[$Value['position']][$Nr]['module-title'] = $ModuleTitle;
+  $Modules[$Value['position']][$Nr]['module-text'] = $ModuleText;
+  $Modules[$Value['position']][$Nr]['module-unique'] = $ModuleUnique;
+  $Modules[$Value['position']][$Nr]['module-params'] = $ModuleParams;
+  $Modules[$Value['position']][$Nr]['module-nr'] = $Value['nr'];
+  }
+ }
+
+
+
+
+
+/*
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE lang_id='".$MYVAR['LANG_ID']."' AND first_page='1'";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+  foreach($Ds as $Key => $Value){
+  $ForCheck = 'sub_id'.$Value['sub_id'];
+  $CheckKey = searchForModule($ForCheck,$Modules['CENTERavailable']);
+   if($CheckKey != 9999){
+   $Modules['CENTERavailable'] = akrem($Modules['CENTERavailable'],$CheckKey);
+   }
+   
+  $Nr = count($Modules['CENTER']);
+  $Modules['CENTER'][$Nr]['module-title'] = TextFromDB($Value['title']);
+  $Modules['CENTER'][$Nr]['module-type'] = 'sub_id';
+  $Modules['CENTER'][$Nr]['module-id'] = $Value['sub_id'];
+  $Modules['CENTER'][$Nr]['module-text'] = iconv_substr(strip_tags($Value['text']),0,100,'UTF-8');
+  $Modules['CENTER'][$Nr]['module-hidden'] = $Modules['CENTER'][$Nr]['module-type'].$MYVAR['DELIMITERS'][3].$Modules['CENTER'][$Nr]['module-id'].(($Value['params']!='')?$MYVAR['DELIMITERS'][1].$Value['params']:'');
+  }
+ }
+*/
+
+//printr($Modules);
+
+ foreach($Modules as $Key => $Values){
+ ${$Key} = '';
+ $TrashIcon = '<!---->';
+ $SettingsIcon = '<!---->';
+ $EditIcon = '<!---->';
+
+  if(in_array($Key,array('TOP','CENTER','BOTTOM'))){
+  $SettingsIcon = '<span class="ui-icon ui-icon-wrench cursor-pointer" onClick="dialogLayoutObjectSettings({\'object\' : $(this)});"><!----></span>';
+  $TrashIcon = '<span class="ui-icon ui-icon-trash cursor-pointer" onClick="removeObject($(this),\'modules-available-'.strtolower($Key).'\');"><!----></span>';
+  //$EditIcon = '<span class="ui-icon ui-icon-pencil cursor-pointer" onClick="editObject($(this));"><!----></span>';
+  }
+  
+  foreach($Values as $KeyValue => $Value){
+  $HiddenParams = json_encode($Value['module-params']);
+  
+  $Html = '
+  <li class="object-drag ui-widget-content ui-corner-all">
+  <div class="object-header ui-widget-header ui-corner-tr ui-corner-tl">'.$Value['module-title'].'</div>
+  <span class="text">'.$Value['module-text'].'</span>
+  <div class="object-hidden">
+   <span class="module-unique">'.$Value['module-unique'].'</span>
+   <span class="module-text">'.$Value['module-text'].'</span>
+   <span class="module-params">'.$HiddenParams.'</span>
+  </div>
+  <div class="object-settings"></div>
+  <div class="object-footer ui-corner-bl ui-corner-br">
+  <div class="object-icon">'.$TrashIcon.'</div>
+  <div class="object-icon">'.$SettingsIcon.'</div>
+  <div class="object-icon">'.$EditIcon.'</div>
+  </div>
+ </li>
+ ';  
+  ${$Key} .= $Html;
+  $Modules[$Key][$KeyValue]['html'] = $Html;
+  }
+ }
+
+//printr($Modules['CENTER']);
+
+echo'
+<script type="text/javascript" src="/my/scripts/layout.js" language="javascript"></script>
+<script type="text/javascript" src="/my/ckeditor/ckeditor.js"></script>
+
+<div id="layout-available-modules-set">
+
+
+<div id="layout-top">
+ <ul id="modules-top" class="modules-top">
+'; 
+ for($i=0;$i<1;$i++){
+ $Key = actionSearchInArrayByField(array('field' => 'module-nr','value' => $i, 'array' => $Modules['TOP']));
+ $Item = ($Key < 0) ? '<li class="ui-widget-content ui-corner-all"><!----></li>' : $Modules['TOP'][$Key]['html'];
+ echo $Item;
+ }
+echo '
+<li class="ui-widget-content ui-corner-all"><!----></li>
+ </ul>
+</div>
+<div id="layout-top-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_TOP_TITLE').'</span></div>
+
+
+<div id="layout-center">
+<ul id="modules-center" class="modules-center">
+'; 
+ for($i=0;$i<=8;$i++){
+ $Key = actionSearchInArrayByField(array('field' => 'module-nr','value' => $i, 'array' => $Modules['CENTER']));
+ $Item = ($Key < 0) ? '<li class="ui-widget-content ui-corner-all"><!----></li>' : $Modules['CENTER'][$Key]['html'];
+ echo $Item;
+ }
+ 
+ for($i=0;$i<count($Modules['CENTER']);$i++) echo '<li class="ui-widget-content ui-corner-all"><!----></li>';
+ echo '
+</ul>
+</div>
+<div id="layout-center-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_CENTER_TITLE').'</span></div>
+
+
+<div id="layout-bottom">
+ <ul id="modules-bottom" class="modules-bottom">
+ '; 
+ for($i=0;$i<=2;$i++){
+ $Key = actionSearchInArrayByField(array('field' => 'module-nr','value' => $i, 'array' => $Modules['BOTTOM']));
+ $Item = ($Key < 0) ? '<li class="ui-widget-content ui-corner-all"><!----></li>' : $Modules['BOTTOM'][$Key]['html'];
+ echo $Item;
+ }
+ for($i=0;$i<count($Modules['BOTTOM']);$i++) echo '<li class="ui-widget-content ui-corner-all"><!----></li>';
+ echo '
+ </ul>
+</div>
+<div id="layout-bottom-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_BOTTOM_TITLE').'</span></div>
+
+<div id="layout-available-modules-top">
+ <div class="layout-available-modules-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_TOP_AVAILABLE_TITLE').'</span></div>
+ <div class="layout-modules-inner">
+ <ul id="modules-available-top" class="modules-top">
+ '.$TOPavailable.'
+ <li><!----></li>
+ </ul>
+ </div>
+</div>
+
+<div id="layout-available-modules-center">
+ <div class="layout-available-modules-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_CENTER_AVAILABLE_TITLE').'</span></div>
+ <div class="layout-modules-inner">
+ <ul id="modules-available-center" class="modules-center">
+ '.$CENTERavailable.'
+ <li><!----></li>
+</ul>
+</div>
+</div>
+
+<div id="layout-available-modules-bottom">
+ <div class="layout-available-modules-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_BOTTOM_AVAILABLE_TITLE').'</span></div>
+ <div class="layout-modules-inner">
+ <ul id="modules-available-bottom" class="modules-bottom">
+ '.$BOTTOMavailable.'
+ <li><!----></li>
+ </ul>
+ </div>
+</div>
+
+<div id="layout-controls" class="table-row-footer">
+'.myButton(array('text'=>tr('BTTN_SAVE',0),'onclick'=>'actionSaveLayout({});')).'
+</div>
+<div id="layout-controls-title"><span class="ui-widget-header ui-corner-all">'.tr('STR_MODULE_LAYOUT_CONTROLS_TITLE').'</span></div>
+</div>
+';
+
+function actionSearchInArrayByField($Options){
+$Opts = array_merge(array('field' => 'module-nr', 'value' => '', 'array' => array()),$Options);
+
+ foreach($Opts['array'] as $Key => $Value){
+  if(isset($Value[$Opts['field']]) && $Value[$Opts['field']] == $Opts['value']) return $Key;
+ }
+return -1;
+}
+
+?>

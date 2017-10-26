@@ -1,0 +1,33 @@
+<?php
+//-----------------------------------------------------------------------------------
+//DIALOG: add banner content
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddBannerContent'){
+ $Data = array(
+ );
+  
+ $tmpOut = '
+ <form name="ActionForm" method="post" action="">
+ <table>
+ <tr>
+ <td>'.tr('STR_BANNER_CONTENT_TYPE_SELECT').'</td>
+ </tr>
+ <tr>
+ <td>
+ '.tr('STR_ELEMENT_TYPE_NEWS',0).' <input type="radio" name="Type" value="news"/>
+ '.tr('STR_ELEMENT_TYPE_MODULE',0).' <input type="radio" name="Type" value="module"/>
+ '.tr('STR_ELEMENT_TYPE_PRODUCT',0).' <input type="radio" name="Type" value="product"/>
+ </td>
+ </tr>
+ <tr>
+ <td id="id-tdSelect"></td>
+ </tr>
+ </table>
+ </form>
+  ';
+  
+ $Out['dialog']['title'] = tr('STR_TITLE_ADD_BANNER_CONTENT',0);
+ $Out['dialog']['text'] = $tmpOut;
+ }
+ 
+?>

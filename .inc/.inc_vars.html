@@ -1,0 +1,46 @@
+<?php
+//---------------------------------------------------------------------------------
+//Main variables
+//---------------------------------------------------------------------------------
+$MYVAR = array();
+$MYVAR['ROOT'] = $_SERVER['DOCUMENT_ROOT'].'/';
+$MYVAR['HTTP'] = 'http://'.$_SERVER['HTTP_HOST'].'/';
+$MYVAR['SESSION'] = $MYVAR['ROOT'].'sessions/';
+$MYVAR['SECTION'] = $MYVAR['ROOT'].'sec/';
+$MYVAR['IS_AJAX'] = 0;
+
+$MYVAR['PUBLIC']['USER_ID'] = 3;
+$MYVAR['USER'] = array('ID' => '', 'GROUP_ID' => '','START_SUB_ID' => 182, 'IP' => '', 'LOGGED' => 0);
+
+$MYVAR['UNIQUE'] = 0;
+$MYVAR['PAGE_ID'] = '';
+
+//---------------------------------------------------------------------------------
+//IP variables
+//---------------------------------------------------------------------------------
+ if (getenv("HTTP_CLIENT_IP") && strcasecmp(getenv("HTTP_CLIENT_IP"), "unknown")) $MYVAR['USER']['IP'] = getenv("HTTP_CLIENT_IP");
+ else if (getenv("HTTP_X_FORWARDED_FOR") && strcasecmp(getenv("HTTP_X_FORWARDED_FOR"), "unknown")) $MYVAR['USER']['IP'] = getenv("HTTP_X_FORWARDED_FOR");
+ else if (getenv("REMOTE_ADDR") && strcasecmp(getenv("REMOTE_ADDR"), "unknown")) $MYVAR['USER']['IP'] = getenv("REMOTE_ADDR");
+ else if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], "unknown")) $MYVAR['USER']['IP'] = $_SERVER['REMOTE_ADDR'];
+ else $MYVAR['USER']['IP'] = "unknown";
+
+
+//---------------------------------------------------------------------------------
+//Starting session
+//---------------------------------------------------------------------------------
+session_save_path($MYVAR['SESSION']);
+session_start();
+$MYVAR['USER']['ID'] = (isset($_SESSION['UserID']) && $_SESSION['UserID']!='') ? $_SESSION['UserID'] : $MYVAR['PUBLIC']['USER_ID'];
+ if($MYVAR['USER']['ID'] != $MYVAR['PUBLIC']['USER_ID'])$MYVAR['USER']['LOGGED'] = 1;
+
+$MYVAR['LANG'] = (isset($_SESSION['Lang']) && $_SESSION['Lang']!='') ? $_SESSION['Lang'] : '';
+$MYVAR['ERROR'] = (isset($_SESSION['error']) && $_SESSION['error']!='') ? $_SESSION['error'] : '';
+$MYVAR['REQUEST'] = (isset($_SESSION['request'])) ? $_SESSION['request'] : array();
+
+unset($_SESSION['error']);
+unset($_SESSION['request']);
+
+
+if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')$MYVAR['IS_AJAX'] = 1;
+
+?>

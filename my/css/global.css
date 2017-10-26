@@ -1,0 +1,311 @@
+
+html,body {margin:0; padding:0; height:100%;}
+img {border:none;}
+td {text-align:left; font-family:Verdana, Arial; font-size:11px;}
+.text-left {text-align:left;}
+.text-center {text-align:center;}
+.text-right {text-align:right;}
+.text-top {vertical-align:top;}
+.text-bottom {vertical-align:bottom;}
+.bold {font-weight: bold;}
+
+.align-left {float:left;}
+.align-right {float:right;}
+
+
+a.link-main {font-family: Verdana; color: rgb(20,20,20); font-size: 11px; text-decoration:none; text-transform: uppercase;}
+a.link-main:hover {color: rgb(100,100,100);}
+a.link-sub {font-family: Verdana; color: rgb(80,80,80); font-size: 11px; text-decoration:none;}
+a.link-sub:hover {color: rgb(120,120,120);}
+
+a.link {font-family: Verdana; color: rgb(70,100,70); font-size: 11px; text-decoration:underline;}
+a.link:hover {color: rgb(100,140,100); text-decoration:none;}
+
+
+div#main {position:absolute; width:100%; height:auto !important; height:100%; min-height:100%;}
+div#left {position:absolute; width:230px; height:100%; min-height:1000px; margin:0; float:left; background-color:rgb(219,229,236);}
+div#left #left-top {position:relative; width:100%; height: 87px; background:url("/my/img/image.png") no-repeat scroll 0 0 transparent;}
+div#left #left-center {position:relative; width:100%;}
+div#left #left-center form {margin:10px 0 0 20px;}
+div#left #left-center form .action-button{margin:10px 0 0 100px;}
+div#left #left-bottom {position:absolute; width:100%; bottom:0; height:30px; background:url("/my/img/image.png") no-repeat scroll 0 -331px transparent; color:white; font-family:Verdana,Arial; font-size:11px; padding:3px}
+div#content {position: relative; margin-left:232px; padding:5px;}
+div#content #content-top {position:relative; width:100%;}
+div#content #content-center {position:relative; width:100%; height:100%;}
+div#content #content-bottom {position:relative; width:100%; bottom:0;}
+div#footer {position:absolute; margin-left:230px; bottom:0; right:0;}
+
+
+input.Design {font-family: Verdana; font-color: rgb(178,176,164); font-size:11px; background-color:rgb(255,255,255); height:16px; border:1px solid rgb(178,176,164);}
+textarea.Design {font-family: Verdana; font-color: rgb(178,176,164); font-size:11px; background-color:rgb(255,255,255); border:1px solid rgb(178,176,164);}
+select.Design {font-family: Verdana; font-color: rgb(178,176,164); font-size:11px; background-color:rgb(255,255,255); border:1px solid rgb(178,176,164); height:21px;}
+.editor-form {border: 1px solid rgb(190,190,190); width: 1000px; height: 800px; margin:0; overflow: auto; padding: 10px;}
+.InputEditor {margin:5px;}
+.editor-row1 {font-family: Verdana, Arial; font-size:11px; color:#000; margin: 5px;padding:3px;}
+.EditorFooter {float: left;}
+textarea.standard {width:250px; height:100px; overflow:auto;}
+
+
+
+
+.LoginUser {background:url("/my/img/image.png") no-repeat scroll -235px -134px transparent; padding-left:25px; margin-bottom:5px;}
+.LoginPwd {background:url("/my/img/image.png") no-repeat scroll -236px -107px transparent; padding-left:25px;}
+.LoginCode {width:60px;}
+.Login {float:right; margin:5px 56px 0 0;}
+.Login span {font-family:Verdana, Arial; font-size:11px;}
+#id-form-login {margin: 10px 10px 0 0;}
+#id-form-login input {float:right;}
+#id-form-login ul {float:right; margin:5px 0 0 50px;}
+#msg-login-error {float:right; color: red; font-size:11px; font-family:Verdana; margin: 3px 10px 3px 0; width:150px;}
+.logged-div {font-family: Verdana, Arial; font-size:11px; color: rgb(255,255,255); padding:5px;}
+.logged-user-name {font-family:Tahoma,Verdana,Arial; font-size:12px; font-weight: bold; width:193px; height:15px; padding-left:10px;}
+.logged-user-exit {font-family:Tahoma,Verdana,Arial; font-size:12px; font-weight: bold; width:193px; height:15px; padding-left:10px;}
+.logged-user-exit span {cursor: pointer;}
+.logged-user-string {width:220px; height:15px; border:1px solid black1; padding-bottom:10px;}
+
+
+.logged-user-name .language {font-weight: normal; cursor: pointer;text-decoration: none;}
+.logged-user-name .language:hover {text-decoration: underline;}
+
+.menu-break-dark {height:2px; width:100%; background:url("/my/img/image.png") no-repeat scroll 0 -116px transparent;}
+.menu-break-light {height:2px; width:100%; background:url("/my/img/image.png") no-repeat scroll -5px -241px transparent;}
+.menu-bullet {height:8px; width:8px; background:url("/my/img/image.png") no-repeat scroll -241px -90px transparent;}
+.menu-left-dark {background:url("/my/img/image.png") no-repeat scroll -5px -87px transparent;}
+.menu-left-active {background:url("/my/img/image.png") no-repeat scroll -5px -218px transparent;}
+
+.table-class1 {border-collapse:collapse;}
+.table-class1 td {border: 1px solid rgb(247,247,247); padding:4px;}
+
+.table-class2 {border-collapse:collapse;}
+.table-class2 td {padding:2px;}
+
+.table-class3 {border-collapse:collapse;}
+.table-class3 td {border: 0 none; padding:4px;}
+
+.table-class4 {border-collapse:collapse;}
+.table-class4 td {border: 0 none; padding:1px;}
+
+.icon-button {padding:3px; cursor: pointer;}
+
+
+
+/*.lang-variable {color: rgb(85,70,50);}*/
+
+.table-row1 {color:rgb(0,0,0); height:20px; background-color: rgb(226,231,234);}
+.table-row1-hover {background-color: rgb(238,238,231);}
+
+.table-row2 {color:rgb(0,0,0); height:20px; background-color: rgb(234,234,234);}
+.table-row2-hover {background-color: rgb(230,230,215);}
+
+.table-row3 {color:rgb(0,0,0); height:20px; background-color:rgb(208,209,206);}
+.table-row3-hover {background-color:rgb(216,217,214);}
+
+.table-row-red1 {color:rgb(0,0,0); background-color:rgb(236,216,213);}
+.table-row-red1-hover {color:rgb(0,0,0); background-color:rgb(244,224,221);}
+.table-row-red2 {color:rgb(0,0,0); background-color:rgb(255,240,236);}
+.table-row-red3 {color:rgb(0,0,0); background-color:rgb(251,222,211);}
+.table-row-header {color:rgb(255,255,255); height:25px; background:url("/my/img/image.png") repeat-x scroll 0 -546px transparent; border:1px solid rgb(108,97,79); padding:6px;}
+.table-row-footer {color:rgb(255,255,255); height:25px; background-color:rgb(204,216,223); border:1px solid rgb(108,97,79); padding:4px;}
+
+.text-nowrap {white-space: nowrap;}
+.height100 {height: 100px;}
+.height200 {height: 200px;}
+.height300 {height: 300px;}
+.height50 {height: 50px;}
+.height100p {height: 100%;}
+.width40 {width: 40px;}
+.width50 {width: 50px;}
+.width75 {width: 75px;}
+.width100 {width: 100px;}
+.width150 {width: 150px;}
+.width200 {width: 200px;}
+.width250 {width: 250px;}
+.width300 {width: 300px;}
+.width400 {width: 400px;}
+.width500 {width: 500px;}
+.width600 {width: 600px;}
+.width1000 {width: 1000px;}
+.width50p {width: 50%;}
+.width100p {width: 100%;}
+.object-hidden {display: none;}
+
+.grey {color:rgb(110,110,110); font-style:italic}
+
+.gallery-picture {position: relative; border:1px solid rgb(180,180,180); padding:0 1px 1px 1px; width: 105px; background:rgb(240,240,240); float:left; margin:1px;}
+.REMOVEgallery-picture {position: relative; border:1px solid rgb(180,180,180); padding:0 1px 1px 1px; width: 105px; height:100px; background:rgb(240,240,240); float:left; margin:1px;}
+.gallery-picture img {padding:4px 1px 0 1px;}
+.gallery-picture-footer {bottom:0; float:left; height:20px; width: 96%; padding:2px 0 0 0; margin:0 0 2px 0;}
+.REMOVEgallery-picture-footer {position:absolute; bottom:0; float:left; height:20px; width: 96%; padding:2px 0 0 0; margin:0 0 2px 0;}
+.gallery-picture-icon {width:16px; height: 16px; float:right; margin-left:2px;}
+
+/*---------------------------------------------------------------
+Div elements [user permission for example]
+---------------------------------------------------------------*/
+div.DivSelect
+	{
+	cursor: pointer;
+	font-family: Verdana, Arial;
+	font-size: 11px;
+	color:rgb(100,100,100);
+	height:17px;
+	border-top:1px solid rgb(170,170,170);
+	border-left:1px solid rgb(170,170,170);
+	border-right:1px solid rgb(200,200,200);
+	border-bottom:1px solid rgb(240,240,240);
+ 	background:url("/my/img/image.png") repeat-x scroll 0 -630px transparent;
+	padding: 3px 0 0 3px;
+	}
+div.DivSelectOver
+	{
+	cursor:pointer;
+	font-family: Verdana, Arial;
+	font-size: 11px;
+	color:rgb(75,75,75);
+	height:17px;
+	padding: 3px 0 0 3px;	
+	border-bottom:1px solid rgb(182,194,201);
+	border-left:1px solid rgb(214,240,255);
+	border-right:1px solid rgb(182,194,201);
+	border-top:1px solid rgb(214,240,255);
+	background:url("/my/img/image.png") repeat-x scroll 0 -578px transparent;
+	}
+div.DivSelectSet
+	{
+	font-family: Verdana, Arial;
+	font-size: 11px;
+	color:rgb(100,100,100);
+	height:17px;
+	padding: 3px 0 0 3px;	
+	border-bottom:1px solid rgb(184,143,0);
+	border-left:1px solid rgb(254,234,166);
+	border-right:1px solid rgb(184,143,0);
+	border-top:1px solid rgb(254,234,166);
+	background-color:rgb(250,199,24);
+	}
+
+.permission-block {
+	cursor: pointer;
+	font-family: Verdana, Arial;
+	font-size: 11px;
+	color:rgb(100,100,100);
+	height:17px;
+	padding: 3px 0 0 3px;
+	margin-bottom:2px;
+	
+}
+
+.permission-active {color: red; background-color:rgb(255,240,236);}
+.permission-over { background-color: rgb(238,238,231);text-decoration:underline;}
+
+
+
+
+
+
+.icon-edit {height:16px; width:15px; background:url("/my/img/image.png") repeat-x scroll -243px -214px transparent; cursor: pointer; margin:2px;}
+.icon-trash {height:16px; width:15px; background:url("/my/img/image.png") repeat-x scroll -242px -238px transparent; cursor: pointer; margin:2px;}
+.icon-user {height:15px; width:15px; background:url("/my/img/image.png") repeat-x scroll -238px -66px transparent; border:1px solid black1;}
+.icon-exit {height:15px; width:15px; background:url("/my/img/image.png") repeat-x scroll -240px -160px transparent;}
+.icon-move {height:16px; width:15px; background:url("/my/img/image.png") repeat-x scroll -243px -286px transparent; cursor: pointer; margin:2px;}
+.icon-add {height:16px; width:15px; background:url("/my/img/image.png") repeat-x scroll -243px -308px transparent; cursor: pointer; margin:2px;}
+
+.icon-arrow-left-red {height:9px; width:10px; background:url("/my/img/image.png") repeat-x scroll -245px -454px transparent; cursor: pointer; margin:2px;}
+.icon-arrow-left-green {height:9px; width:10px; background:url("/my/img/image.png") repeat-x scroll -245px -414px transparent; cursor: pointer; margin:2px;}
+.icon-arrow-left-blue {height:9px; width:10px; background:url("/my/img/image.png") repeat-x scroll -245px -434px transparent; cursor: pointer; margin:2px;}
+
+.icon-arrow-right-red {height:9px; width:10px; background:url("/my/img/image.png") repeat-x scroll -245px -394px transparent; cursor: pointer; margin:2px;}
+.icon-arrow-right-green {height:9px; width:10px; background:url("/my/img/image.png") repeat-x scroll -245px -354px transparent; cursor: pointer; margin:2px;}
+.icon-arrow-right-blue {height:9px; width:10px; background:url("/my/img/image.png") repeat-x scroll -245px -374px transparent; cursor: pointer; margin:2px;}
+
+
+
+.icon-plus-green, .icon-plus-black, .icon-minus-green, .icon-minus-black {height:11px; width:11px; cursor: pointer; margin:2px; float: left;}
+.icon-plus-black {background:url("/my/img/image.png") repeat-x scroll -277px -278px transparent;}
+.icon-minus-black {background:url("/my/img/image.png") repeat-x scroll -277px -258px transparent;}
+.icon-plus-green {background:url("/my/img/image.png") repeat-x scroll -277px -238px transparent;}
+.icon-minus-green {background:url("/my/img/image.png") repeat-x scroll -277px -218px transparent;}
+
+.cursor-pointer {cursor: pointer;}
+
+.lang-variable-text {border:1px solid red;float:left}
+.lang-variable-icon { border:1px solid green;float:left}
+.lang-variable {}
+
+.table-row-var-title {font-size:14px; font-weight: bold; padding:5px 0 0 0;}
+.table-row-var-description {}
+
+
+.message {margin: 10px auto; width:500px; text-align:center; font: 12px Arial,Helvetica,sans-serif;}
+.message-user-list {float:left; width:250px;height:200px; overflow: auto;}
+.message-user-row {float:left; width:220px; height:20px; padding:2px; margin-top:1px;text-align:right;font-weight:normal; cursor: pointer;}
+.message-item {float:left; margin:1px;}
+.message-item .ui-icon {float:right; cursor: pointer;}
+.message-unread {font-weight: bold;}
+
+.dialog-simple-row {float:left; height:20px; padding:1px 1px 1px 5px; margin-top:1px;font-weight:normal; cursor: pointer;}
+
+.news-date {color: rgb(100,100,100); font-family: Tahoma; font-size: 12px;}
+.news-title {color: rgb(0,0,0); font-family: Tahoma; font-size: 14px; font-weight: bold; margin:-15px 0 0 80px; display: block;}
+.news-description {display: block; margin:0 0 10px 0;}
+.news-controls {display: block; text-align:right;}
+
+.nested {display: block;}
+.notify {margin: 3px 0 0 0; width:100%;}
+.notify-icon {margin:5px 0 0 5px; cursor: pointer;}
+#id-divNotifyText {float: left; width:215px; margin:0 0 0 5px;}
+.notify-text {font-family: Tahoma, Arial, Verdana; font-size: 12px; color:rgb(70,70,70); cursor: pointer;}
+.notify-text:hover {color:rgb(88,88,88);text-decoration:underline;}
+.notify-date {font-family: Arial, Verdana; font-size: 11px; color:rgb(150,150,150); float:left; width:100%;}
+#id-divNotification:hover{}
+
+
+
+.icon-usd {height:10px; width: auto;background:url("/my/img/image.png") repeat-x scroll -248px -493px transparent; cursor: pointer; display: inline; padding-left:10px;}
+.icon-eur {height:10px; width: auto;background:url("/my/img/image.png") repeat-x scroll -247px -474px transparent; cursor: pointer; display: inline; padding-left:10px;}
+
+.transaction-header div {margin:0 10px 0 0; float: left;}
+
+.loading-small {position: relative; width:100px; height:20px; padding:2px;}
+.loading-small .icon {position: absolute; width: 18px; height:18px; background:url("/my/img/loading_small.gif") no-repeat center center transparent;}
+.loading-small .text {position: absolute; left: 25px; bottom:4px; color:rgb(150,150,150);}
+
+
+
+/*
+ * Clearfix: contain floats
+ *
+ * For modern browsers
+ * 1. The space content is one way to avoid an Opera bug when the
+ *    `contenteditable` attribute is included anywhere else in the document.
+ *    Otherwise it causes space to appear at the top and bottom of elements
+ *    that receive the `clearfix` class.
+ * 2. The use of `table` rather than `block` is only necessary if using
+ *    `:before` to contain the top-margins of child elements.
+ */
+
+.clearfix:before,
+.clearfix:after {
+    content: " "; /* 1 */
+    display: table; /* 2 */
+}
+
+.clearfix:after {
+    clear: both;
+}
+
+/*
+ * For IE 6/7 only
+ * Include this rule to trigger hasLayout and contain floats.
+ */
+
+.clearfix {
+    *zoom: 1;
+}
+
+
+.gallery-picture-footer textarea, .gallery-picture-footer input {display:none;}
+.banner {list-style: none; margin: 0; padding: 0;}
+.banner, .banner>li, .banner>li>table {width: 100%;}
+
+.banner .ui-icon-arrow-4-diag{cursor: move;} 
+.my-element {border:1px solid red;}

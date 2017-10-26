@@ -1,0 +1,161 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$Data = array(
+'news_id' => (isset($_REQUEST['NewsID']) && $SQL->GetSQLData($_REQUEST['NewsID'],'news_id',$MYVAR['MYSQL']['PREFIX'].'news','id') != '') ? $_REQUEST['NewsID'] : '',
+'button' => tr('BTTN_ADD',0)
+);
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ ${'Date_'.$Key} = '';
+ ${'Title_'.$Key} = '';
+ ${'Description_'.$Key} = '';
+ ${'Text_'.$Key} = '';
+ ${'BlockStatus_'.$Key} = '';
+ ${'CreateUser_'.$Key} = '';
+ ${'CreateDate_'.$Key} = '';
+ ${'UpdateUser_'.$Key} = '';
+ ${'UpdateDate_'.$Key} = '';
+ ${'ThisNewsID_'.$Key} = '';
+ ${'Rotation_'.$Key} = '';
+ }
+
+
+ if($Data['news_id'] != ''){
+ $Data['button'] = tr('BTTN_SAVE',0);
+ 
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE news_id=".(int)$Data['news_id']." AND lang_id=".(int)$Lang['VALUE'];
+  $Ds=$SQL->Select($Query);
+   if($Ds){
+   ${'Date_'.$Key} = myDate($Ds[0]['date']);
+   ${'Title_'.$Key} = TextFromDBForm($Ds[0]['title']);
+   ${'Description_'.$Key} = TextFromDBForm($Ds[0]['description']);
+   ${'Text_'.$Key} = $Ds[0]['text'];
+   ${'BlockStatus_'.$Key} = $Ds[0]['block_status'];
+   ${'CreateUser_'.$Key} = $Ds[0]['create_user'];
+   ${'CreateDate_'.$Key} = $Ds[0]['create_date'];
+   ${'UpdateUser_'.$Key} = $Ds[0]['update_user'];
+   ${'UpdateDate_'.$Key} = $Ds[0]['update_date'];
+   ${'ThisNewsID_'.$Key} = $Ds[0]['id'];
+   ${'Rotation_'.$Key} = $Ds[0]['rotation'];
+   }
+  }
+ }
+
+$Colspan = sizeof($MYVAR['LANGS']) + 1;
+echo'
+<script type="text/javascript" src="/my/ckeditor/ckeditor.js"></script>
+
+<form name="ActionForm" method="post" action="" id="id-formNews">
+<table width="100%" class="table-class1">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1">'.tr('STR_DATE').'<br/>
+ <input type="text" name="Date_'.$Key.'" value="'.${'Date_'.$Key}.'" class="Design"/></td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1">'.tr('STR_TITLE').' ('.$Lang['lang_long'].')<br/>
+ <input type="text" name="Title_'.$Key.'" value="'.${'Title_'.$Key}.'" class="Design width300"/></td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1">'.tr('STR_DESCRIPTION').'<br/>
+ <textarea rows="5" cols="30" name="Description_'.$Key.'" style="overflow:hidden" class="Design width300">'.${'Description_'.$Key}.'</textarea></td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+<td class="table-row1" colspan="'.$Colspan.'" id="EditorToolbar"><!----></td>
+</tr>
+<tr>
+';
+$JS = '';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1">'.tr('STR_TEXT').'<br/>
+ <textarea name="Text_'.$Key.'" id="Text_'.$Key.'" style="height:100px;">'.${'Text_'.$Key}.'</textarea> 
+ </td>
+ ';
+ 
+ $JS .= "
+CKEDITOR.replace( 'Text_".$Key."',
+	{
+	height: 200,
+	customConfig : '/my/ckeditor/my_config.js',
+	toolbar: 'Section',
+	enterMode : CKEDITOR.ENTER_BR,
+	shiftEnterMode: CKEDITOR.ENTER_P,
+	sharedSpaces :
+		{
+		top : 'EditorToolbar'
+		
+		}
+    }); 
+ ";
+ }
+
+echo'
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1">'.tr('STR_NEWS_ROTATION').': 
+ '.tr('STR_YES').' <input type="radio" name="Rotation_'.$Key.'" value="1"'.CheckRadio(${'Rotation_'.$Key},'1').'/>
+ '.tr('STR_NO').' <input type="radio" name="Rotation_'.$Key.'" value="0"'.CheckRadio(${'Rotation_'.$Key},'0').'/>
+ </td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1">'.tr('STR_BLOCK_STATUS').': 
+ <select name="BlockStatus_'.$Key.'" class="Design">
+ <option value=""><!----></option>
+ <option value="0"'.CheckSelect('0',${'BlockStatus_'.$Key}).'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+ <option value="1"'.CheckSelect('1',${'BlockStatus_'.$Key}).'>'.tr('STR_BLOCK_STATUS_1',0).'</option>
+ </select> <br/>
+ '.myCreateUpdateDate(${'CreateUser_'.$Key},${'CreateDate_'.$Key}).' '.myCreateUpdateDate(${'UpdateUser_'.$Key},${'UpdateDate_'.$Key}).'
+ <input type="hidden" name="LangID_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+ <input type="hidden" name="ThisNewsID_'.$Key.'" value="'.${'ThisNewsID_'.$Key}.'"/>
+ </td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+<td class="table-row-footer" colspan="'.$Colspan.'">
+'.myButton(array('text'=>$Data['button'],'onclick'=>'actionAddNews({\'redirect\' : \'?SubId=242\'})')).'
+<input type="hidden" name="NewsID" value="'.$Data['news_id'].'"/>
+<input type="hidden" name="SubId" value="'.$SubId.'"/>
+</td></tr></table>
+</form>
+<script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/news.js"></script>
+';
+?>
+
+<script type="text/javascript" language="javascript"> 
+<?php echo $JS;?>
+
+	$(document).ready(function(){
+	$('input[name="Date_0"]').bind('click change', function(){updateField('Date_0','Date_');});
+	});
+</script>

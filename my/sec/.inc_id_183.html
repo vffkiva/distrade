@@ -1,0 +1,115 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 500;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+$Filter = array(
+	'key' => $SubId,
+	'text' => '',
+	'query' => '',
+	'if' => '',
+		'fields' => actionGetFilterFields(array('key' => $SubId))
+	);
+ if(!empty($Filter['fields']))$Filter['text'] = tr('STR_FILTER_SET');
+ if(isset($Filter['fields']['user_id']))$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND user_id=".(int)$Filter['fields']['user_id']:" user_id=".(int)$Filter['fields']['user_id'];
+ if(isset($Filter['fields']['is_ajax']))$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND is_ajax=".(int)$Filter['fields']['is_ajax']:" is_ajax=".(int)$Filter['fields']['is_ajax'];
+$Filter['if'] = ($Filter['query']!='')?" WHERE ".$Filter['query']:""; 
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."log_online".$Filter['if']." ORDER BY time DESC";
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+  for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+
+
+$Colspan = 14;
+ echo '
+ <table class="table-class1 width100p">
+ <tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+ <tr>
+ <td class="table-row2 bold" rowspan="2">#</td>
+ <td class="table-row2 bold" rowspan="2">'.tr('STR_USER').'</td>
+ <td class="table-row2 bold" rowspan="2">'.tr('STR_IP').'</td>
+ <td class="table-row2 bold" rowspan="2">'.tr('STR_SCRIPT').'</td>
+ <td class="table-row2 bold" rowspan="2">'.tr('STR_REQUEST_TYPE').'</td>
+ <td class="table-row2 bold" rowspan="2">'.tr('STR_SECTION').'</td>
+ <td class="table-row2 bold" colspan="2">'.tr('STR_PARAMETERS').'</td>
+ <td class="table-row2 bold" rowspan="2">'.tr('STR_TIME').'</td>
+ </tr>  
+ <tr>
+ <td class="table-row2">GET</td>
+ <td class="table-row2">POST</td>
+ </tr>
+ <tr>
+ <td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'width\' : \'500\', \'height\' : \'250\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text'].'
+ </td>
+ </tr>
+ ';
+ 
+ 
+ if(empty($Ds))echo '<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+
+
+  foreach($Ds as $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  
+  $Ajax = ($Value['is_ajax'] == 1) ? 'ajax' : 'http'; 
+  $Section = ($Value['sub_id'] != '') ? netViewTree($Value['sub_id']) : '';
+  $Get = explode("&",$Value['_get']);
+  $Post = explode("&",$Value['_post']);
+  $GetShow = '';
+  $PostShow = '';
+  
+  $Title = DisplayUser($Value['user_id'], 0).' '.myDate($Value['time']).' ['.$Ajax.']';
+   if(sizeof($Get) < 2){
+   $GetShow = implode("&",$Get);
+   }
+   else {
+   $GetShow .= $Get[0].' [<a class="link-sub bold" href="javascript:void(0)" onClick="dialogViewUserOnlineParams({\'log_id\' : \''.$Value['id'].'\', \'title\' : \''.$Title.'\'});">...</a>]';
+   }
+
+   if(sizeof($Post) < 2){
+   $PostShow = implode("&",$Post);
+   }
+   else {
+   $PostShow .= $Post[0].' [<a class="link-sub bold" href="javascript:void(0)" onClick="dialogViewUserOnlineParams({\'log_id\' : \''.$Value['id'].'\', \'title\' : \''.$Title.'\'});">...</a>]';
+   }  
+  
+  echo' 
+  <tr>
+  <td class="table-row1">'.$ShowNr.'</td>
+  <td class="table-row1 text-nowrap">'.DisplayUser($Value['user_id']).'</td>
+  <td class="table-row1">'.$Value['IP'].'</td>
+  <td class="table-row1">'.$Value['script'].'</td>
+  <td class="table-row1">'.$Ajax.'</td>
+  <td class="table-row1">'.$Section.'</td>
+  <td class="table-row1">'.$GetShow.'</td>
+  <td class="table-row1">'.$PostShow.'</td>
+  <td class="table-row1 text-nowrap">'.myDate($Value['time']).'</td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  }
+ 
+ }
+echo'
+<tr><td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'width\' : \'500\', \'height\' : \'250\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text'].'
+</td></tr>
+</table>
+<script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/users.js"></script>
+';
+?>

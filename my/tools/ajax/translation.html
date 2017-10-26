@@ -1,0 +1,34 @@
+<?php
+
+  if($action == 'viewVar'){
+  $VarName = $_REQUEST['VarName'];
+  $VarID = $_REQUEST['VarID'];
+  $VarLang = (isset($_REQUEST['Lang']) && $_REQUEST['Lang'] != '') ? $_REQUEST['Lang'] : $MYVAR['LANG'];
+   
+   if(defined('TR_'.$VarLang.'_'.$VarName)) $VarValue = constant('TR_'.$VarLang.'_'.$VarName);
+   else $VarValue = $VarName;
+
+  $Out['dialog']['title'] = $VarName.' ('.$VarLang.')';
+  $Out['dialog']['text'] = '
+  <form name="ActionForm_'.$VarID.'" id="ActionForm_'.$VarID.'" method="post" action="">
+  <table width="100%">
+  <tr>
+  <td class="text-top">'.$MYVAR['LANG_LONG'].'</td>
+  <td><textarea class="Design width300 height100" name="VarValue">'.$VarValue.'</textarea></td>
+  </tr>
+  </table>
+  <input type="hidden" name="VarLang" value="'.$VarLang.'"/>
+  </form>
+  ';
+  } 
+ 
+
+  if($action == 'saveVar'){
+  $VarName = $_REQUEST['VarName'];
+  $VarLang = (isset($_REQUEST['VarLang']) && $_REQUEST['VarLang'] != '') ? $_REQUEST['VarLang'] : $MYVAR['LANG'];
+  $VarValue = $Text = str_replace("'","\'",$_REQUEST['VarValue']);
+
+  saveLanguageVariable($VarLang,$VarName,$VarValue);
+  $Out['dialog']['text'] = $VarValue;
+  } 
+?>

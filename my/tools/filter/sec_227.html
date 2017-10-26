@@ -1,0 +1,26 @@
+<?php
+$Data['fields'] = array(
+'product' => ((isset($Data['fields']['product'])) ? $Data['fields']['product'] : ''),
+'manufacturer_id' => ((isset($Data['fields']['manufacturer_id'])) ? $Data['fields']['manufacturer_id'] : ''),
+'manufacturers' => Table2Arr("SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers WHERE lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY name",'name','manufacturer_id', 'block_status'),
+);
+
+$tmpOut .= '
+<tr>
+<td>'.tr('STR_MANUFACTURER').'</td>
+<td><select name="manufacturer_id" class="Design">
+<option value="">'.tr('STR_ANY_MALE').'</option>
+';
+ foreach($Data['fields']['manufacturers'] AS $Key => $Value){
+ $Text = ((int)$Value['block_status'] == 1) ? ' ('.tr('STR_BLOCK_STATUS_1').')' : '';
+ $tmpOut .= '<option value="'.$Value['VALUE'].'"'.CheckSelect($Value['VALUE'],$Data['fields']['manufacturer_id']).'>'.TextFromDBForm($Value['TEXT']).$Text.'</option>';
+ }
+$tmpOut .= '
+</select></td>
+</tr>
+<tr>
+<td>'.tr('STR_PRODUCT').'</td>
+<td><input type="text" name="product" class="Design width300" value="'.$Data['fields']['product'].'"/></td>
+</tr>
+';
+?>

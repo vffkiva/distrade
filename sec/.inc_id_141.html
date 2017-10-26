@@ -1,0 +1,20 @@
+<?php
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE id='".$ModuleID."' AND lang_id='".$MYVAR['LANG_ID']."'";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $Title = TextFromDB($Ds[0]['title']);
+ $Text = TextFromDB($Ds[0]['text']);
+
+echo'
+<table class="chapter">
+<tr><td class="chapter-tl">'.space('4','4').'<!----></td><td class="chapter-t"><!----></td><td class="chapter-tr"><!----></td></tr>
+<tr><td class="chapter-l"><!----></td><td class="chapter-text">
+<div class="center-title">'.$Title.'</div>
+<div class="center-text">'.$Text.'</div>
+</td><td class="chapter-r"><!----></td></tr>
+<tr><td class="chapter-bl"><!----></td><td class="chapter-b"><!----></td><td class="chapter-br">'.space('4','4').'</td></tr>
+</table>
+';
+}
+?>

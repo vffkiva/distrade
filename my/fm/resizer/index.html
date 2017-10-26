@@ -1,0 +1,53 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'].'/my/.inc/.inc_vars.html';
+
+$Image = $_REQUEST['image'];
+$ImageInfo = getimagesize($_SERVER['DOCUMENT_ROOT'].'/'.$Image);
+//echo'<pre>';print_r($ImageInfo);
+?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Image resize</title>
+    <script type="text/javascript" src="../scripts/jquery-1.6.2.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../scripts/jquery-ui/jquery-ui-1.8.16.custom.css" />
+    <script type="text/javascript" src="../scripts/jquery-ui/jquery-ui-1.8.16.custom.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="jrac/style.jrac.css" />
+    <script type="text/javascript" src="jrac/jquery.jrac.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script type="text/javascript">
+
+$(document).ready(function(){
+$('.pane img').jrac({'crop_width': 50, 'crop_height': 50, 'crop_x': 10, 'crop_y': 10, 'image_width': <?php echo $ImageInfo[0];?>, 'viewport_onload': function() {
+	var $viewport = this;
+	var inputs = $(top.parent.document).find('#container-img-resize-inputs input:text');
+	var events = ['crop_x','crop_y','crop_width','crop_height','image_width','image_height','canvas_width','canvas_height'];
+
+		for (var i = 0; i < events.length; i++) {
+		var event_name = events[i];
+		$viewport.observator.register(event_name, inputs.eq(i));
+			inputs.eq(i).bind(event_name, function(event, $viewport, value) {
+			$(this).val(value);
+			})
+			.change(event_name, function(event) {
+			var event_name = event.data;
+			$viewport.$image.scale_proportion_locked = $viewport.$container.parent('.pane').find('.coords input:checkbox').is(':checked');
+			$viewport.observator.set_property(event_name,$(this).val());
+			});
+		}
+	}
+})
+	.bind('viewport_events', function(event, $viewport) {
+	var inputs = $(top.parent.document).find('#container-img-resize-inputs input:text');
+	//inputs.css('background-color',($viewport.observator.crop_consistent())?'chartreuse':'salmon');
+        });
+
+		});
+</script>
+</head>
+<body>
+<div class="pane clearfix"><img src="<?php echo $_REQUEST['image'];?>" /></div>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<?php
+//-----------------------------------------------------------------------------------
+//ACTION: add news
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionAddNews'){
+ $Data = array(
+ 'news_id' => $_REQUEST['NewsID'],
+ 'sub_id' => $_REQUEST['SubId'],
+ 'news' => array()
+ );
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Date = myDateDB($_REQUEST['Date_'.$Key]);
+  $Title = TextToDB($_REQUEST['Title_'.$Key]);
+  $Description = TextToDB($_REQUEST['Description_'.$Key]);
+  $Text = TextToDB($_REQUEST['Text_'.$Key]);
+  $BlockStatus = $_REQUEST['BlockStatus_'.$Key];
+  $ThisNewsID = $_REQUEST['ThisNewsID_'.$Key];
+  $Rotation = (isset($_REQUEST['Rotation_'.$Key]) && $_REQUEST['Rotation_'.$Key] != '') ? (int)$_REQUEST['Rotation_'.$Key] : 0;
+   if($Date != '' && $Title != '' && $Text != '' && $BlockStatus != ''){
+   $Data['news'][] = array(
+	'lang_id' => (int)$Lang['VALUE'],
+	'news_id' => $ThisNewsID,
+	'date' => $Date,
+	'title' => $Title,
+	'description' => $Description,
+	'text' => $Text,
+	'block_status' => (int)$BlockStatus,
+	'rotation' => (int)$Rotation
+	);
+   }
+  }
+    
+  if(empty($Data['news']))$Error = tr('MSG_ERROR_ENTER_NEWS_DATA',0);
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  if($Error == ''){
+   if($Data['news_id'] == ''){
+   $Query = "SELECT MAX(news_id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."news";
+   $Ds=$SQL->Select($Query);
+    if(!$Ds)$Data['news_id'] = 0;
+    else $Data['news_id']=$Ds[0]['id']+1;
+   }
+    
+   foreach($Data['news'] AS $Key => $Value){
+    if($Value['news_id'] == ''){
+    $Query = "
+	INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."news SET news_id=".(int)$Data['news_id'].",lang_id=".$Value['lang_id'].", date='".$Value['date']."', title='".$Value['title']."',
+	description='".$Value['description']."',text='".$Value['text']."',rotation=".$Value['rotation'].",block_status=".$Value['block_status'].",
+	create_date=NOW(),create_user=".(int)$MYVAR['USER']['ID'];
+	;
+    $Ds=$SQL->Insert($Query);
+    }
+	else {
+    $Query = "
+	UPDATE ".$MYVAR['MYSQL']['PREFIX']."news SET date='".$Value['date']."', title='".$Value['title']."',description='".$Value['description']."',
+    text='".$Value['text']."',rotation=".$Value['rotation'].",block_status=".$Value['block_status'].",update_date=NOW(),
+	update_user=".(int)$MYVAR['USER']['ID']." WHERE id=".(int)$Value['news_id'];
+    $Ds=$SQL->Update($Query);
+    }   
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+ 
+//-------------------------------------------------------------------------------
+//ACTION: block news
+//-------------------------------------------------------------------------------
+ if($action == 'actionBlockNews'){
+ $Data = array(
+ 'block_status' => (isset($_REQUEST['BlockStatus']) && $_REQUEST['BlockStatus'] != '') ? $_REQUEST['BlockStatus'] : '',
+ 'total_fields' => (isset($_REQUEST['TotalFields']) && $_REQUEST['TotalFields'] != '') ? $_REQUEST['TotalFields'] : ''
+ );
+ 
+  if($Data['block_status'] != ''){
+   for($i=0;$i<(int)$Data['total_fields'];$i++){
+   $NewsID = (isset($_REQUEST['News_'.$i]) && $_REQUEST['News_'.$i] != '') ? $_REQUEST['News_'.$i] : '';
+
+    if($NewsID!=''){
+    $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."news SET block_status=".(int)$Data['block_status'].",update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$NewsID;
+    $Ds=$SQL->Update($Query);
+    }
+   } 
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+ 
+//-------------------------------------------------------------------------------
+//ACTION: delete news
+//-------------------------------------------------------------------------------  
+ if($action == 'actionDeleteNews' && userPermission('244')){
+ $Data = array(
+ 'news_id' => (isset($_REQUEST['NewsID']) && $_REQUEST['NewsID'] != '') ? $_REQUEST['NewsID'] : ''
+ );
+
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE id=".(int)$Data['news_id'];
+ $Ds=$SQL->Delete($Query);
+
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE module_type='news' AND module_id=".(int)$Data['news_id'];
+ $Ds=$SQL->Delete($Query);
+ }
+?>

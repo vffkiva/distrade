@@ -1,0 +1,117 @@
+<?php
+
+
+function mysql_ErrorMsg($msg){
+$text='
+<table border="0" cellpadding="0" cellspacing="0">
+<tr><td align="center">
+<font size="1" face="Verdana"><b>Error: </b>'.$msg.'<br>
+<font color="red">'.mysql_error().'</font></font>
+</td></tr></table>
+';
+die($text);
+}
+
+$MYSQL_CLASS_INC=TRUE;
+class mysql_class{
+var $NumQueries = 0;
+
+function mysql_class($User,$Pass,$Host,$Db) {
+$this->user=$User;
+$this->pass=$Pass;
+$this->host=$Host;
+$this->id=mysql_connect($this->host,$this->user,$this->pass) or mysql_ErrorMsg("Unable to connect to mysql server: $this->host");
+//mysql_query("SET NAMES cp1251");
+mysql_select_db($Db,$this->id) or mysql_ErrorMsg("Unable to select database: ".$Db);
+mysql_query("SET NAMES UTF8") or die(mysql_error());
+mysql_query("SET sql_mode = ''") or die(mysql_error());
+}
+
+// Use if checking for empty query result returns 0 if empty, and 1 if there is at least one result
+function Exists($query){
+$this->result=mysql_query($query,$this->id);
+ if(mysql_num_rows($this->result)) return 1;
+ else return 0;
+}
+
+function SwitchDB($db){
+@mysql_select_db($db,$this->id) or
+mysql_ErrorMsg("Unable to select database: $db");
+} 
+
+// Select aray from table
+function Select($query){
+$this->result=mysql_query($query,$this->id) or mysql_ErrorMsg('Unable to perform query <b>[SELECT]</b>:<br> '.$query);
+$this->NumQueries++;
+ if(empty($this->result)) {
+ $this->rows=0; //???
+ return FALSE;
+ }
+$this->rows=mysql_num_rows($this->result);
+$count = 0;
+$data = array();
+ while($row_array = mysql_fetch_array($this->result,MYSQL_ASSOC)) {//MYSQL_ASSOC,MYSQL_NUM,MYSQL_BOTH
+ $data[$count] = $row_array;
+ $count++;
+ }
+mysql_free_result($this->result);
+return $data;
+}
+
+// Insert row into a table
+function Insert($query){
+$this->result=@mysql_query($query,$this->id) or mysql_ErrorMsg('Unable to perform query <b>[INSERT]</b>:<br> '.$query);
+$this->NumQueries++;
+return $this->result;
+}
+
+// Delete row(s) from table
+function Delete($query){
+$this->result=@mysql_query($query,$this->id) or mysql_ErrorMsg('Unable to perform query <b>[DELETE]</b>:<br> '.$query);
+$this->d_rows=@mysql_affected_rows($this->id); // !!! ATTENTION $this->id (not $this->result) must USED  !!!
+return $this->result;
+}
+
+// Update row(s) from table
+function Update($query){
+$this->NumQueries++;
+$this->result=@mysql_query($query,$this->id) or mysql_ErrorMsg('Unable to perform query <b>[UPDATE]</b>:<br> '.$query);
+$this->u_rows=@mysql_affected_rows($this->id); // !!! ATTENTION $this->id (not $this->result) must USED  !!!
+return $this->result;
+}
+
+// Compute total results  from table
+function TotalResults($query){
+$this->result=@mysql_query($query) or mysql_ErrorMsg('Unable to perform query:<br> '.$query);
+$this->num=@mysql_num_rows($this->result);
+return $this->num;
+}
+	
+// Get one item from table according to parametrs
+function GetSQLData($what,$with,$table,$field){
+$query = "SELECT * FROM ".$table." WHERE ".$with." = '".$what."'";
+//echo $query;
+$this->result=@mysql_query($query) or mysql_ErrorMsg("Unable to perform query <b>[GETSQLDATA]</b>:".$query);
+$this->row=@mysql_fetch_array($this->result);
+$this->NumQueries++;
+return $this->row[$field];
+}
+
+// Select aray from table
+function ShowTables($query){
+//$query = "SHOW TABLES FROM ".$db;
+//echo $query;
+$this->result=@mysql_query($query,$this->id) or mysql_ErrorMsg('Unable to perform query <b>[SHOW TABLES]</b>:<br> '.$query);
+$this->rows=mysql_num_rows($this->result);
+$count = 0;
+$data = array();
+ while($row_array = mysql_fetch_array($this->result,MYSQL_ASSOC)) {//MYSQL_ASSOC,MYSQL_NUM,MYSQL_BOTH
+ $data[$count] = $row_array;
+ $count++;
+ }
+mysql_free_result($this->result);
+return $data;
+}
+
+}
+?>

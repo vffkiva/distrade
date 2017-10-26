@@ -1,0 +1,223 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$Data = array(
+'gallery_id' => (isset($_REQUEST['GalleryID']) && $SQL->GetSQLData($_REQUEST['GalleryID'],'gallery_id',$MYVAR['MYSQL']['PREFIX'].'gallery','id') != '') ? $_REQUEST['GalleryID'] : '',
+'image_list' => '',
+'readonly' => '0',
+'width' => 110,
+'height' => 80,
+'is_banner' => '',
+'preview_count' => '',
+'texts' => '',
+'langs' => '',
+'button' => tr('BTTN_ADD',0)
+);
+
+
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ ${'Name_'.$Key} = '';
+ ${'Description_'.$Key} = '';
+ ${'BlockStatus_'.$Key} = '';
+ ${'CreateUser_'.$Key} = '';
+ ${'CreateDate_'.$Key} = '';
+ ${'UpdateUser_'.$Key} = '';
+ ${'UpdateDate_'.$Key} = '';
+ ${'ThisGalleryID_'.$Key} = '';
+ }
+
+
+ if($Data['gallery_id'] != ''){
+ $Data['button'] = tr('BTTN_SAVE',0);
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."gallery WHERE gallery_id=".(int)$Data['gallery_id']." AND lang_id=".(int)$Lang['VALUE'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+   ${'Name_'.$Key} = ($Ds[0]['name']);
+   ${'Description_'.$Key} = ($Ds[0]['description']);
+   ${'BlockStatus_'.$Key} = $Ds[0]['block_status'];
+   ${'CreateUser_'.$Key} = $Ds[0]['create_user'];
+   ${'CreateDate_'.$Key} = $Ds[0]['create_date'];
+   ${'UpdateUser_'.$Key} = $Ds[0]['update_user'];
+   ${'UpdateDate_'.$Key} = $Ds[0]['update_date'];
+   ${'ThisGalleryID_'.$Key} = $Ds[0]['id'];
+   $Data['width'] = $Ds[0]['preview_width'];
+   $Data['height'] = $Ds[0]['preview_height'];
+   $Data['preview_count'] = $Ds[0]['preview_count'];
+   $Data['is_banner'] = $Ds[0]['is_banner'];
+   $Data['readonly'] = $Ds[0]['readonly'];
+   }
+  } 
+ 
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='gallery' AND module_id=".(int)$Data['gallery_id'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $NR=$SQL->rows;
+  $CR=0;
+   while($CR<$NR){
+   $Data['image_list'] .= '
+   <div class="gallery-picture ui-corner-all">
+    <div class="gallery-picture-image"><a rel="group1" href="'.$Ds[$CR]['picture'].'" title=""><img src="/my/tools/thumb.html?src='.$Ds[$CR]['picture'].'&amp;ass=x&amp;size=100"/></a></div>
+    <div class="gallery-picture-footer ui-corner-bl ui-corner-br">
+    <span class="gallery-picture-icon"><span class="ui-icon ui-icon-trash cursor-pointer"><!----></span></span>
+    <span class="gallery-picture-icon"><span class="ui-icon ui-icon-comment cursor-pointer"><!----></span></span>
+   ';
+   
+    foreach($MYVAR['LANGS'] as $Key => $Lang){
+    $Text = $Title = '';
+    $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id='".$Ds[$CR]['id']."' AND lang_id='".$Lang['VALUE']."'";
+    $DsL=$SQL->Select($Query);
+     if($DsL){
+	 $Text = $DsL[0]['text'];
+	 $Title = $DsL[0]['title'];
+	 }
+    $Data['image_list'] .= '
+    <input type="hidden" name="Lang_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+	<input type="text" name="Title_'.$Key.'" value="'.$Title.'"/>
+    <textarea rows="5" cols="50" name="Text_'.$Key.'">'.$Text.'</textarea>
+    ';
+    }
+ 
+   $Data['image_list'] .= '
+    <input type="hidden" name="PictureID" value="'.$Ds[$CR]['id'].'"/>
+    </div>
+   </div>
+   ';
+   $CR++;
+   }
+  }
+ 
+ }
+
+/*
+$ImageList = '
+<div class="gallery-picture ui-corner-all">
+ <div class="gallery-picture-image"><a rel="group1" href="/files/slides/img1.jpg" title="Hello world <br/> aaaaa"><img src="/my/tools/thumb.html?src=/files/slides/img1.jpg&ass=x&size=100"/></a></div>
+ <div class="gallery-picture-footer ui-widget-header ui-corner-bl ui-corner-br">
+ <span class="gallery-picture-icon"><span class="ui-icon ui-icon-trash cursor-pointer"><!----></span></span>
+ <span class="gallery-picture-icon"><span class="ui-icon ui-icon-comment cursor-pointer"><!----></span></span>
+ ';
+ foreach($MYVAR['LANGS'] as $Key => $Lang){
+ $ImageList .= '
+  <input type="hidden" name="Lang_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+  <textarea rows="5" cols="50" name="Text_'.$Key.'"></textarea>
+ ';
+ }
+ $ImageList .= '
+ </div>
+</div>
+
+<div class="gallery-picture ui-corner-all">
+ <div class="gallery-picture-image"><a rel="group1" href="/files/slides/img1.jpg" title="Hello world <br/> aaaaa"><img src="/my/tools/thumb.html?src=/files/slides/img1.jpg&ass=x&size=100"/></a></div>
+ <div class="gallery-picture-footer ui-widget-header ui-corner-bl ui-corner-br">
+ <span class="gallery-picture-icon"><span class="ui-icon ui-icon-trash cursor-pointer"><!----></span></span>
+ <span class="gallery-picture-icon"><span class="ui-icon ui-icon-comment cursor-pointer"><!----></span></span>
+ ';
+ foreach($MYVAR['LANGS'] as $Key => $Lang){
+ $ImageList .= '
+  <input type="hidden" name="Lang_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+  <textarea rows="5" cols="50" name="Text_'.$Key.'"></textarea>
+ ';
+ }
+ $ImageList .= '
+ </div>
+</div>
+';*/
+
+//$Colspan = sizeof($MYVAR['LANGS']);
+
+$Colspan = (sizeof($MYVAR['LANGS']) == 1) ? 2 : sizeof($MYVAR['LANGS']);
+$LangColspan = (sizeof($MYVAR['LANGS']) == 1) ? ' colspan="2"' : '';
+
+
+echo'
+<form name="ActionForm" method="post" action="" id="ActionForm">
+<table class="table-class1 width100p">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $Name = TextFromDBForm(${'Name_'.$Key});
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_GALLERY_NAME').' ('.$Lang['lang_long'].')<br/>
+ <input type="text" name="Name_'.$Key.'" value="'.$Name.'" class="Design width300" />
+ </td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $Description = ${'Description_'.$Key};
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_DESCRIPTION').' ('.$Lang['lang_long'].')<br/>
+ <textarea class="Design width300 height100" name="Description_'.$Key.'">'.$Description.'</textarea>
+ </td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+<td class="table-row1" colspan="'.$Colspan.'">'.tr('STR_GALLERY_PICTURES').'</td>
+</tr>
+<tr>
+<td class="table-row1 text-center" colspan="'.$Colspan.'" id="gallery-pics">'.$Data['image_list'].'</td>
+</tr>
+<tr>
+<td class="table-row1 text-center" colspan="'.$Colspan.'">
+'.myButton(array('text'=>tr('BTTN_QUICK_VIEW',0),'onclick'=>'showFileTree({\'title\' : \''.tr('STR_QUICK_VIEW',0).'\'});')).' 
+'.myButton(array('text'=>tr('BTTN_FILE_MANAGER',0),'onclick'=>'showFileBrowser({\'action\' : \'addToGallery\'});')).'
+<br/><br/><br/><br/>
+</td>
+</tr>
+<tr>
+<td class="table-row1">'.tr('STR_GALLERY_PREVIEW_COUNT').'</td>
+<td class="table-row1"><input type="text" name="PreviewCount" value="'.$Data['preview_count'].'" class="Design width50"/></td>
+</tr>
+<tr>
+<td class="table-row1">'.tr('STR_GALLERY_PREVIEW_DIMENSIONS').'</td>
+<td class="table-row1"><input type="text" name="Width" value="'.$Data['width'].'" class="Design width50"/>px x <input type="text" name="Height" value="'.$Data['height'].'" class="Design width50"/>px</td>
+</tr>
+<tr>
+<td class="table-row1">'.tr('STR_DELETABLE').'</td>
+<td class="table-row1">
+<input type="radio" name="ReadOnly" value="0"'.CheckRadio($Data['readonly'],'0').'/> '.tr('STR_YES').'
+<input type="radio" name="ReadOnly" value="1"'.CheckRadio($Data['readonly'],'1').'/> '.tr('STR_NO').'
+</td>
+</tr>
+<tr>
+<td class="table-row1">'.tr('STR_IS_BANNER').'</td>
+<td class="table-row1">
+<input type="radio" name="IsBanner" value="1"'.CheckRadio($Data['is_banner'],'1').'/> '.tr('STR_YES').'
+<input type="radio" name="IsBanner" value="0"'.CheckRadio($Data['is_banner'],'0').'/> '.tr('STR_NO').'
+</td>
+</tr>
+<tr>
+';
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_BLOCK_STATUS').': 
+ <select name="BlockStatus_'.$Key.'" class="Design">
+ <option value=""><!----></option>
+ <option value="0"'.CheckSelect('0',${'BlockStatus_'.$Key}).'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+ <option value="1"'.CheckSelect('1',${'BlockStatus_'.$Key}).'>'.tr('STR_BLOCK_STATUS_1',0).'</option>
+ </select> <br/>
+ '.tr('STR_CREATED_FEMALE').': '.myCreateUpdateDate(${'CreateUser_'.$Key},${'CreateDate_'.$Key}).'<br/>'.tr('STR_UPDATED_FEMALE').': '.myCreateUpdateDate(${'UpdateUser_'.$Key},${'UpdateDate_'.$Key}).'
+ <input type="hidden" name="LangID_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+ <input type="hidden" name="ThisGalleryID_'.$Key.'" value="'.${'ThisGalleryID_'.$Key}.'"/>
+ </td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+<td class="table-row-footer" colspan="'.$Colspan.'">
+'.myButton(array('text'=>$Data['button'],'onclick'=>'gallerySave({\'redirect\' : \'?SubId=253\'});')).'
+<input type="hidden" name="GalleryID" value="'.$Data['gallery_id'].'"/>
+<input type="hidden" name="TotalLangs" value="'.sizeof($MYVAR['LANGS']).'"/>
+</td></tr></table></form>
+';
+?>

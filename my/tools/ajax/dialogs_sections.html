@@ -1,0 +1,319 @@
+<?php
+//-----------------------------------------------------------------------------------
+//DIALOG: preview section
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogPreviewSection'){
+ $Data = array(
+ 'lang_id' => $_REQUEST['LangID'],
+ 'sub_id' => $_REQUEST['SubId'],
+ 'preview' => '',
+ 'text' => ''
+ );
+  
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id=".(int)$Data['sub_id']." AND lang_id=".(int)$Data['lang_id'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $Data['preview'] = $Ds[0]['preview_text'];
+  $Data['text'] = $Ds[0]['text'];
+  }
+  
+ $tmpOut = '
+ <table>
+ <tr><td class="table-row1"><div id="PreviewEditorToolbar"><!----></div></td></tr>
+ <tr><td class="table-row1"><textarea rows="5" name="PreviewText">'.$Data['preview'].'</textarea></td></tr>
+ </table>
+  ';
+  
+ $Out['dialog']['title'] = tr('STR_TITLE_PREVIEW_EDIT',0);
+ $Out['dialog']['text'] = $tmpOut;
+ $Out['dialog']['main_text'] = $Data['text'];
+ }
+
+//-----------------------------------------------------------------------------------
+//DIALOG: title configuration window
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogTitleConfiguration'){
+ $Data = array(
+ 'lang_id' => $_REQUEST['LangID'],
+ 'object_id' => $_REQUEST['ObjectID'],
+ 'type' => $_REQUEST['Type'],
+ 'text' => $_REQUEST['TitleText'],
+ 'style_text' => ' style=""',
+ 'default_styles' => array('bold' => '', 'italic'=>'', 'underline'=>'', 'fontfamily'=>'', 'fontsize'=>'', 'color'=>'rgb(0,0,0)')
+ );
+  if($Data['text'] == '') $Data['text'] = 'This is example text';
+  
+  if($Data['type'] == 'section')$Query = "SELECT title_style AS style FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id=".(int)$Data['object_id']." AND lang_id=".(int)$Data['lang_id'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds) && $Ds[0]['style']!=''){
+   $Data['style_text'] = ' style="'.$Ds[0]['style'].'"';
+   $Tmp = explode(";",$Ds[0]['style']);
+    foreach($Tmp AS $Key => $Style){
+    $Style = TextPlain(preg_replace('/\s/','',$Style));
+	 if($Style != ''){
+      list($CssName,$CssValue) = explode(":",$Style);
+      if($Style == 'font-weight:bold')$Data['default_styles']['bold'] = ' checked';
+      if($Style == 'font-style:italic')$Data['default_styles']['italic'] = ' checked';
+      if($Style == 'text-decoration:underline')$Data['default_styles']['underline'] = ' checked';
+      if($CssName == 'font-family')$Data['default_styles']['fontfamily'] = $CssValue;
+      if($CssName == 'font-size')$Data['default_styles']['fontsize'] = $CssValue;
+      if($CssName == 'color')$Data['default_styles']['color'] = $CssValue;
+      }
+	 }
+   } 
+  
+  $tmpOut = '
+  <table>
+  <tr>
+  <td class="table-row1">
+  <input type="checkbox" name="bttn-editor_bold" id="bttn-editor_bold"'.$Data['default_styles']['bold'].'/><label for="bttn-editor_bold"><b>B</b></label>
+  <input type="checkbox" name="bttn-editor_italic" id="bttn-editor_italic"'.$Data['default_styles']['italic'].'/><label for="bttn-editor_italic"><i>I</i></label>
+  <input type="checkbox" name="bttn-editor_underline" id="bttn-editor_underline"'.$Data['default_styles']['underline'].'/><label for="bttn-editor_underline"><u>U</u></label>
+  <select class="Design" name="drop-editor_fontfamily">
+  <option value=""><!----></option>
+  <option value="Arial" style="font-family:Arial;"'.CheckSelect($Data['default_styles']['fontfamily'],'Arial').'>Arial</option>
+  <option value="Verdana" style="font-family:Verdana;"'.CheckSelect($Data['default_styles']['fontfamily'],'Verdana').'>Verdana</option>
+  <option value="Tahoma" style="font-family:Tahoma;"'.CheckSelect($Data['default_styles']['fontfamily'],'Tahoma').'>Tahoma</option>
+  </select>
+  <select class="Design" name="drop-editor_fontsize">
+  <option value=""><!----></option>
+  ';
+   for($i=8;$i<=20;$i++){
+   $tmpOut .= '<option value="'.$i.'px" style="font-size:'.$i.'px;"'.CheckSelect($Data['default_styles']['fontsize'],$i.'px').'>'.$i.'px</option>';
+   }
+  $tmpOut .= ' 
+  </select>
+
+  <div id="colorSelector2"><div style="background-color: '.$Data['default_styles']['color'].'"></div></div>
+  <div id="colorpickerHolder2"></div>
+  <span id="bttn-editor-reset">'.tr('BTTN_RESET',0).'</span>
+  </td></tr>
+  <tr>
+  <td class="table-row1" style="padding:10px 0;"><span id="editor-title-preview"'.$Data['style_text'].'>'.$Data['text'].'</span></td>
+  </tr>
+  <tr>
+  <td class="table-row1">'.tr('STR_TITLE_CONFIG_FOR_ALL').' <input type="checkbox" name="SetToAll"/></td>
+  </tr>  
+
+  </table>
+   ';
+  
+ $Out['dialog']['title'] = tr('STR_TITLE_TITLE_STYLE_CONFIGURATION',0);
+ $Out['dialog']['text'] = $tmpOut;
+ }
+
+ 
+//-----------------------------------------------------------------------------------
+//DIALOG: kayout object seetings
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogLayoutObjectSettings'){
+ $Data = array(
+ 'module_type' => '',
+ 'module_id' => '',
+ 'params' => (isset($_REQUEST['params']) && $_REQUEST['params'] != '') ? stripslashes($_REQUEST['params']) : '',
+ 'position' => (isset($_REQUEST['position']) && $_REQUEST['position'] != '') ? $_REQUEST['position'] : '',
+ 'show_title' => '1',
+ 'show_navigation' => '1'
+ );
+ 
+ 
+ $Tmp = ($Data['params'] != '') ? json_decode($Data['params'],true) : array();
+ $Data = array_merge($Data,$Tmp);
+ 
+ $tmpOut = '
+ <form name="ActionForm" method="post" action="">
+ <table>
+ ';
+  if($Data['module_type'] == 'news'){
+  $tmpOut .= '
+  <tr>
+  <td>'.tr('STR_SELECT_NEWS').'</td>
+  <td><select name="ObjectID">
+  <option value=""><!----></option>
+  ';
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND block_status=0 ORDER BY date DESC, title";
+  $Ds=$SQL->Select($Query);
+   foreach($Ds as $Key => $Value){
+   $Text = myDate($Value['date']).' '.TextFromDB($Value['title']);
+	if(iconv_strlen($Text,'UTF-8') > 60) $Text = iconv_substr($Text,0,60,'UTF-8').'...';
+   $tmpOut .= '<option value="'.$Value['news_id'].'"'.CheckSelect($Data['module_id'],$Value['news_id']).'>'.$Text.'</option>';
+   }
+  $tmpOut .= '
+  </select>
+  </td></tr>
+  ';
+  }
+
+  if($Data['module_type'] == 'module'){
+  $tmpOut .= '
+  <tr>
+  <td>'.tr('STR_SELECT_MODULE').'</td>
+  <td><select name="ObjectID">
+  <option value=""><!----></option>
+  ';
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND block_status=0 AND FIND_IN_SET('".$Data['position']."',position)>0 ORDER BY title, description";
+  $Ds=$SQL->Select($Query);
+   foreach($Ds as $Key => $Value){
+   $Text = strip_tags($Value['text']);
+	if($Value['title'] != '') $Text = $Value['title'];
+    if(iconv_strlen($Text,'UTF-8') > 60) $Text = iconv_substr($Text,0,60,'UTF-8').'...';
+   
+   $tmpOut .= '<option value="'.$Value['module_id'].'"'.CheckSelect($Data['module_id'],$Value['module_id']).'>'.$Text.'</option>';
+   }
+  $tmpOut .= '
+  </select>
+  </td></tr>
+  ';
+  }
+
+  
+  if($Data['module_type'] == 'product'){
+  $tmpOut .= '
+  <tr>
+  <td>'.tr('STR_SELECT_PRODUCT').'</td>
+  <td><select name="ObjectID">
+  <option value=""><!----></option>
+  <option value="-1"'.CheckSelect($Data['module_id'],'-1').'>'.tr('STR_GET_RANDOMLY_FROM_NEW_PRODUCTS',0).'</option>
+  ';
+  $Query = "
+  SELECT t1.product_id, t1.product, t2.name AS manufacturer FROM ".$MYVAR['MYSQL']['PREFIX']."products AS t1 
+  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."manufacturers AS t2 ON t1.manufacturer_id=t2.manufacturer_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+  WHERE t1.lang_id=".(int)$MYVAR['LANG_ID']." AND t1.block_status=0 ORDER BY t2.name, t1.product";
+  $Ds=$SQL->Select($Query);
+   foreach($Ds as $Key => $Value){
+   $Text = (($Value['manufacturer'] != '') ? TextFromDBForm($Value['manufacturer']).' - ' : '').TextFromDBForm($Value['product']);
+    if(iconv_strlen($Text,'UTF-8') > 60) $Text = iconv_substr($Text,0,60,'UTF-8').'...';
+   $tmpOut .= '<option value="'.$Value['product_id'].'"'.CheckSelect($Data['module_id'],$Value['product_id']).'>'.$Text.'</option>';
+   }
+  $tmpOut .= '
+  </select>
+  </td></tr>
+  ';
+  }
+  
+
+  if($Data['module_type'] == 'section'){
+  $tmpOut .= '
+  <tr>
+  <td>'.tr('STR_SELECT_SECTION').'</td>
+  <td><select name="ObjectID">
+  <option value=""><!----></option>
+  ';
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE lang_id=".(int)$MYVAR['LANG_ID']." AND preview_text!='' ORDER BY title";
+  $Ds=$SQL->Select($Query);
+   foreach($Ds as $Key => $Value){
+   $Text = strip_tags($Value['text']);
+    if($Value['title'] != '') $Text = $Value['title'];
+    if(iconv_strlen($Text,'UTF-8') > 60) $Text = iconv_substr($Text,0,60,'UTF-8').'...';
+
+	$tmpOut .= '<option value="'.$Value['sub_id'].'"'.CheckSelect($Data['module_id'],$Value['sub_id']).'>'.$Text.'</option>';
+   }
+  $tmpOut .= '
+  </select>
+  </td></tr>
+  ';
+  }
+
+
+  if($Data['module_type'] == 'banner'){
+  $tmpOut .= '
+  <tr>
+  <td>'.tr('STR_SELECT_BANNER').'</td>
+  <td><select name="ObjectID">
+  <option value=""><!----></option>
+  ';
+  $Query = "
+  SELECT t1.id, t1.name FROM ".$MYVAR['MYSQL']['PREFIX']."banners AS t1 
+  WHERE t1.block_status=0 AND (SELECT COUNT(id) FROM ".$MYVAR['MYSQL']['PREFIX']."banner_details WHERE banner_id=t1.id AND lang_id=".(int)$MYVAR['LANG_ID'].")>0
+  ";
+  $Ds=$SQL->Select($Query);
+   foreach($Ds as $Key => $Value){
+   $Text = TextFromDBForm($Value['name']);
+    if(iconv_strlen($Text,'UTF-8') > 60) $Text = iconv_substr($Text,0,60,'UTF-8').'...';
+   $tmpOut .= '<option value="'.$Value['id'].'"'.CheckSelect($Data['module_id'],$Value['id']).'>'.$Text.'</option>';
+   }
+  $tmpOut .= '
+  </select>
+  </td></tr>
+  ';
+  }
+  
+  
+  if(in_array($Data['module_type'], array('news','module','section','product'))){
+ $tmpOut .= '
+ <tr>
+ <td>'.tr('STR_SHOW_TITLE').'</td>
+ <td>'.tr('STR_YES').' <input type="radio" name="ShowTitle" value="1"'.CheckRadio($Data['show_title'],'1').'/> '.tr('STR_NO').' <input type="radio" name="ShowTitle" value="0"'.CheckRadio($Data['show_title'],'0').'/></td>
+ </tr>
+ <tr>
+ <td>'.tr('STR_SHOW_NAVIGATION').'</td>
+ <td>'.tr('STR_YES').' <input type="radio" name="ShowNavigation" value="1"'.CheckRadio($Data['show_navigation'],'1').'/> '.tr('STR_NO').' <input type="radio" name="ShowNavigation" value="0"'.CheckRadio($Data['show_navigation'],'0').'/></td>
+ </tr>
+ ';
+ }
+ $tmpOut .= '
+ </table>
+ </form>
+ '; 
+ 
+ $Out['dialog']['title'] = tr('STR_TITLE_EDIT_LAYOUT_OBJECT_SETTINGS',0);
+ $Out['dialog']['text'] = $tmpOut; 
+ }
+
+
+//-----------------------------------------------------------------------------------
+//DIALOG: add user defined element to ckeditor
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddMyElement'){
+ $Data = array(
+ 
+ );
+ 
+ $tmpOut = '
+ <form name="ActionForm" method="post" action="">
+ <table>
+ <tr>
+ <td><input type="radio" name="Type" value="gallery"/></td>
+ <td>'.tr('STR_GALLERY').'</td>
+ <td><select name="GalleryID" class="Design"><option value="">'.tr('STR_SELECT').'</option>
+ <option value="all">'.tr('STR_ALL').'</option>
+ ';
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."gallery WHERE block_status=0 AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY name";
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+   foreach($Ds as $Key => $Value){
+   $tmpOut .= '<option value="'.$Value['gallery_id'].'">'.TextFromDBForm($Value['name']).'</option>';
+   }
+  }
+ $tmpOut .= '
+ </select>
+ </td>
+ </tr>
+ <tr>
+ <td><input type="radio" name="Type" value="banner"/></td>
+ <td>'.tr('STR_BANNER').'</td>
+ <td><select name="BannerID" class="Design"><option value="">'.tr('STR_SELECT').'</option>
+ ';
+ $Query = "
+ SELECT t1.* FROM ".$MYVAR['MYSQL']['PREFIX']."banners AS t1 WHERE t1.block_status=0 AND 
+ (SELECT COUNT(id) FROM ".$MYVAR['MYSQL']['PREFIX']."banner_details WHERE banner_id=t1.id AND lang_id=".(int)$MYVAR['LANG_ID'].")>0 
+ ORDER BY t1.name
+ ";
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+   foreach($Ds as $Key => $Value){
+   $tmpOut .= '<option value="'.$Value['id'].'">'.TextFromDBForm($Value['name']).'</option>';
+   }
+  } 
+ $tmpOut .= '
+ </select>
+ </td>
+ </tr>
+ </table>
+ </form>
+ '; 
+ 
+ $Out['dialog']['title'] = tr('STR_TITLE_ADD_MY_ELEMENT',0);
+ $Out['dialog']['text'] = $tmpOut;
+ } 
+?>

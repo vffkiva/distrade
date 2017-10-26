@@ -1,0 +1,113 @@
+<?php
+//-----------------------------------------------------------------------------------
+//ACTION: add modules
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionAddModule'){
+ $Data = array(
+ 'module_id' => (isset($_REQUEST['ModuleID']) && $_REQUEST['ModuleID'] != '') ? $_REQUEST['ModuleID'] : '',
+ 'readonly' => (isset($_REQUEST['ReadOnly'])) ? $_REQUEST['ReadOnly'] : '',
+ 'modules' => array()
+ );
+  
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Title = TextToDB($_REQUEST['Title_'.$Key]);
+  $Description = TextToDB($_REQUEST['Description_'.$Key]);
+  $Text = TextToDB($_REQUEST['Text_'.$Key]);
+  $BlockStatus = $_REQUEST['BlockStatus_'.$Key];
+  $ThisModuleID = $_REQUEST['ThisModuleID_'.$Key];
+  $Position = array();
+   for($j=0;$j<=2;$j++)if(isset($_REQUEST['Position_'.$Key.'_'.$j]) && $_REQUEST['Position_'.$Key.'_'.$j] != '')$Position[] = $_REQUEST['Position_'.$Key.'_'.$j];
+   if($Text != '' && $BlockStatus != ''){
+   $Data['modules'][] = array(
+   'lang_id' => (int)$Lang['VALUE'],
+   'module_id' => $ThisModuleID,
+   'title' => $Title,
+   'description' => $Description,
+   'text' => $Text,
+   'block_status' => (int)$BlockStatus,
+   'position' => $Position
+	);
+   }
+  }
+
+  if(empty($Data['modules']))$Error = tr('MSG_ERROR_ENTER_MODULES_DATA',0);
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  if($Error == ''){
+  
+   if($Data['module_id'] == ''){
+   $Query = "SELECT MAX(module_id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."modules";
+   $Ds=$SQL->Select($Query);
+    if(!$Ds)$Data['module_id'] = 0;
+    else $Data['module_id'] = (int)$Ds[0]['id']+1;
+   }
+   
+   foreach($Data['modules'] AS $Key => $Value){   
+    if($Value['module_id'] == ''){
+    $Query = "
+	INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."modules SET module_id=".(int)$Data['module_id'].",lang_id=".(int)$Value['lang_id'].", title='".$Value['title']."',
+	description='".$Value['description']."',text='".$Value['text']."',block_status=".(int)$Value['block_status'].",readonly=".(int)$Data['readonly'].",
+	position='".implode(",",$Value['position'])."',create_date=NOW(),create_user=".(int)$MYVAR['USER']['ID']
+	;
+    $Ds=$SQL->Insert($Query);
+    }
+    else{
+    $Query = "
+	UPDATE ".$MYVAR['MYSQL']['PREFIX']."modules SET title='".$Value['title']."',description='".$Value['description']."',text='".$Value['text']."',
+	block_status=".(int)$Value['block_status'].", readonly=".(int)$Data['readonly'].",position='".implode(",",$Value['position'])."',update_date=NOW(),update_user=".(int)$MYVAR['USER']['ID']." 
+	WHERE id=".(int)$Value['module_id'];
+    $Ds=$SQL->Update($Query);
+    }
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ } 
+ 
+//-------------------------------------------------------------------------------
+//ACTION: block modules
+//-------------------------------------------------------------------------------
+ if($action == 'actionBlockModules'){
+ $Data = array(
+ 'block_status' => (isset($_REQUEST['BlockStatus']) && $_REQUEST['BlockStatus'] != '') ? $_REQUEST['BlockStatus'] : '',
+ 'total_fields' => (isset($_REQUEST['TotalFields']) && $_REQUEST['TotalFields'] != '') ? $_REQUEST['TotalFields'] : ''
+ );
+ 
+  if($Data['block_status'] != ''){
+   for($i=0;$i<(int)$Data['total_fields'];$i++){
+   $ModuleID = (isset($_REQUEST['Module_'.$i]) && $_REQUEST['Module_'.$i] != '') ? $_REQUEST['Module_'.$i] : '';
+
+    if($ModuleID!=''){
+    $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."modules SET block_status=".(int)$Data['block_status'].",update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$ModuleID;
+    $Ds=$SQL->Update($Query);
+    }
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+ 
+
+//-------------------------------------------------------------------------------
+//ACTION: delete module
+//-------------------------------------------------------------------------------  
+ if($action == 'actionDeleteModule' && userPermission('248')){
+ $Data = array(
+ 'module_id' => (isset($_REQUEST['ModuleID']) && $_REQUEST['ModuleID'] != '') ? $_REQUEST['ModuleID'] : ''
+ ); 
+ 
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE id=".(int)$Data['module_id'];
+ $Ds=$SQL->Delete($Query);
+ 
+ $Query = "SELECT id,module_params FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE lang_id=".(int)$MYVAR['LANG_ID'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+   foreach($Ds as $Key => $Value){
+   $Params = json_decode($Value['module_params'], true);
+   
+    if(isset($Params['module_type']) && isset($Params['module_id']) && $Params['module_type'] == 'module' && $Params['module_id'] == $Data['module_id']){
+    $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE id=".(int)$Value['id'];
+    $DsD=$SQL->Delete($Query);	
+	}
+   }
+  }
+ }
+
+?>

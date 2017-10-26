@@ -1,0 +1,79 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0 ) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 100;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_types ORDER BY type";
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+  for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+
+
+$Colspan = 5;
+echo '
+<table class="table-class1 width100p">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr> 
+<tr>
+<td class="table-row2 bold">#</b></td>
+<td class="table-row2 bold">'.tr('STR_USER_TYPE').'</td>
+<td class="table-row2 bold">'.tr('STR_BLOCK_STATUS').'</td>
+<td class="table-row2 bold">'.tr('STR_NOTES').'</td>
+<td class="table-row2 bold width50"><!----></td>
+</tr>
+';
+ if(empty($Ds))echo'<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+  
+  foreach($Ds AS $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  $EditHref = ((userPermission('223')) ? myIcon(array('icon' => 'ui-icon-pencil', 'onclick' => 'dialogAddUserType({\'type_id\' : \''.$Value['id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})')) : '');
+  $DelHref = '';
+
+  if(userPermission('106') && $Value['type'] != 'admin'){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_list WHERE type_id='".$Value['id']."'";
+   $DsC=$SQL->Select($Query);
+    if(empty($DsC)){
+    $DelHref = myIcon(array('icon' => 'ui-icon-trash', 'onclick' => 'actionDeleteUserType({\'type_id\' : \''.$Value['id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})'));
+    }
+   }
+
+  echo'
+  <tr>
+  <td class="table-row1">'.$ShowNr.'</td>
+  <td class="table-row1">'.$Value['type'].'</td>
+  <td class="table-row1">'.tr('STR_BLOCK_STATUS_'.$Value['block_status']).'</td>
+  <td class="table-row1">'.$Value['notes'].'</td>
+  <td class="table-row1 text-nowrap">'.$EditHref.' '.$DelHref.'</td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  }
+ echo'
+ <tr>
+ <td class="table-row1" colspan="'.$Colspan.'">'.tr('STR_USER_TYPE_WARNING').'</td>
+ </tr>
+ ';
+ }
+
+echo'
+<tr><td class="table-row-footer" colspan="'.$Colspan.'">
+'.myButton(array('text'=>tr('BTTN_ADD'),'onclick'=>'dialogAddUserType({\'redirect\' : \'?SubId='.$SubId.'\'});')).'
+</td></tr>
+</table>
+<script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/users.js"></script>
+';
+
+?>

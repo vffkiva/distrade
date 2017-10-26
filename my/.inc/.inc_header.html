@@ -1,0 +1,65 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_cache.html';
+require_once $_SERVER['DOCUMENT_ROOT'].'/my/.inc/.inc_functions.html';
+require_once $_SERVER['DOCUMENT_ROOT'].'/my/.inc/.inc_actions.html';
+
+echo '
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>DISTRADE ::CMS</title>
+<link href="//fonts.googleapis.com/css?family=Open+Sans:400,300,700&amp;subset=latin,cyrillic" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="/my/css/global.css" type="text/css" />
+<link rel="stylesheet" href="/my/css/layout.css" type="text/css" />
+<link type="text/css" href="/my/scripts/jquery-ui/jquery-ui-1.10.3.custom.css" rel="Stylesheet" />
+
+<link type="text/css" href="/scripts/fancybox/jquery.fancybox.css" rel="Stylesheet" />
+<link type="text/css" href="/scripts/fancybox/helpers/jquery.fancybox-buttons.css" rel="Stylesheet" />
+<link type="text/css" href="/scripts/fancybox/helpers/jquery.fancybox-thumbs.css" rel="Stylesheet" />
+<link type="text/css" href="/my/fm/scripts/jquery.filetree/jqueryFileTree.css" rel="Stylesheet" />
+<link type="text/css" href="/my/scripts/colorpicker/css/colorpicker.css" rel="Stylesheet" />
+<link type="text/css" href="/my/scripts/fu/fileuploader.css" rel="Stylesheet" />
+ 
+<script type="text/javascript" src="/my/scripts/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="/my/scripts/jquery.json-2.4.js"></script>
+<script type="text/javascript" src="/my/scripts/jquery-ui/jquery-ui-1.10.3.custom.min.js"></script>
+
+<script type="text/javascript" src="/scripts/fancybox/jquery.fancybox.js"></script>
+<script type="text/javascript" src="/scripts/fancybox/helpers/jquery.fancybox-buttons.js"></script>
+<script type="text/javascript" src="/scripts/fancybox/helpers/jquery.fancybox-thumbs.js"></script>
+<script type="text/javascript" src="/scripts/jquery.mousewheel-3.0.6.pack.js"></script>
+<script type="text/javascript" src="/my/scripts/colorpicker/js/colorpicker.js"></script>
+<script type="text/javascript" src="/my/fm/scripts/jquery.filetree/jqueryFileTree.js"></script>
+<script type="text/javascript" src="/my/scripts/fu/fileuploader.js"></script>
+
+
+<script type="text/javascript" src="/my/scripts/vars.js"></script>
+<script type="text/javascript" src="/my/scripts/init.js"></script>
+<script type="text/javascript" src="/my/scripts/functions.js"></script>
+<script type="text/javascript" src="/my/scripts/translation.js"></script>
+<script type="text/javascript" src="/my/scripts/operations.js"></script>
+<script type="text/javascript" src="/my/scripts/gallery.js"></script>
+<script type="text/javascript" src="/my/scripts/filter.js"></script>
+<script type="text/javascript">
+var langCode = \''.$MYVAR['LANG'].'\';
+</script>
+</head>
+<body>
+';
+
+$MYVAR['MESSAGE'] = array_merge(array('text' => '', 'type' => 'error', 'mode' => 'plain', 'title' => tr('TITLE_INFO',0)),$MYVAR['MESSAGE']);
+ if(!empty($MYVAR['MESSAGE']) && $MYVAR['MESSAGE']['text'] != ''){
+ 
+ echo '
+ <div class="object-hidden">
+ <div id="message-type">'.$MYVAR['MESSAGE']['type'].'</div>
+ <div id="message-text">'.$MYVAR['MESSAGE']['text'].'</div>
+ <div id="message-mode">'.$MYVAR['MESSAGE']['mode'].'</div>
+ <div id="message-title">'.$MYVAR['MESSAGE']['title'].'</div>
+ </div>
+ ';
+ unset($_SESSION['message']);
+ }
+
+?>
+

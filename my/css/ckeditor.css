@@ -1,0 +1,9 @@
+.banner-element {border: 1px solid rgb(200,200,200); display: inline-block; width:100%;}
+
+ul.distrade-list {list-style: none; padding:0; margin:0;}
+ul.distrade-list>li {padding-left: 15px; text-indent: -1px;}
+ul.distrade-list>li:before {
+	font-size:15px;
+	content: "•";
+    color: rgb(215,16,0); /* or whatever color you prefer */
+}

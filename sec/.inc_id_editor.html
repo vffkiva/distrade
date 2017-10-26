@@ -1,0 +1,23 @@
+<?php
+$Data = array(
+'title' => '',
+'text' => '',
+'galleries' => ''
+);
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id=".(int)$MYVAR['SUB_ID']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Data['title'] = showTitle($MYVAR['SUB_ID']);
+ $Data['text'] = prepareSectionText(array('text'=>$Ds[0]['text']));
+ }
+
+echo'
+<div class="main-section-cell">
+ <div class="main-section">
+  <div class="title">'.$Data['title'].'</div>
+  <div class="text">'.$Data['text'].'</div> 
+ </div>
+</div>
+';
+?>

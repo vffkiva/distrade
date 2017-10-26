@@ -1,0 +1,186 @@
+<?php
+//-------------------------------------------------------------------------------
+//ACTION: select banner content
+//-------------------------------------------------------------------------------
+ if($action ==  'actionSelectBannerContent'){
+ $Data = array(
+ 'type' => $_REQUEST['Type'],
+ 'lang_id' => $_REQUEST['LangID'],
+ 'content' => array()
+ );
+ 
+ 
+  if($Data['type'] == '')$Error = tr('MSG_ERROR_SELECT_ELEMENT_TYPE',0);
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  if($Error == ''){
+  $tmpOut = '<select name="ElementID" class="Design width300"><option value="">'.tr('STR_SELECT',0).'</option>';
+  $Content = '';
+  
+   if($Data['type'] == 'news'){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE block_status=0 AND lang_id=".(int)$Data['lang_id']." ORDER BY date DESC, news_id";
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+     foreach($Ds as $Key1 => $Value){
+	 $Text = myDate($Value['date']).' - '.TextFromDBForm($Value['title']);
+	  if(iconv_strlen($Text,'UTF-8') > 50)$Text = iconv_substr($Text,0,50,'UTF-8').'...';
+	 $tmpOut .= '<option value="'.$Value['news_id'].'">'.$Text.'</option>';
+	 
+	 $Content = $Value['description'];
+	 $Data['content'][$Value['news_id']] = $Content;
+	 }
+	}
+   }
+
+   if($Data['type'] == 'module'){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE block_status=0 AND lang_id=".(int)$Data['lang_id']." ORDER BY id DESC";
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+	 foreach($Ds as $Key1 => $Value){
+	 $Text = TextPlain(strip_tags($Value['title']));
+	  if($Text == '') {$Text = TextPlain(strip_tags($Value['description']));}
+      if(iconv_strlen($Text,'UTF-8') > 60)$Text = iconv_substr($Text,0,60,'UTF-8').'...';
+	 $tmpOut .= '<option value="'.$Value['module_id'].'">'.$Text.'</option>';
+	 
+	 $Content = $Value['description'];
+	 $Data['content'][$Value['module_id']] = $Content;
+	 }
+	}
+   }	
+   
+   if($Data['type'] == 'product'){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE block_status=0 AND lang_id=".(int)$Data['lang_id']." ORDER BY id DESC";
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+	 foreach($Ds as $Key1 => $Value){
+	 $Text = TextPlain(strip_tags($Value['product']));
+	  if($Text == '') {$Text = TextPlain(strip_tags($Value['description']));}
+      if(iconv_strlen($Text,'UTF-8') > 60)$Text = iconv_substr($Text,0,60,'UTF-8').'...';
+	 $tmpOut .= '<option value="'.$Value['product_id'].'">'.$Text.'</option>';
+	 
+	 $Content = $Value['description'];
+	 $Data['content'][$Value['product_id']] = $Content;
+	 }
+	}
+   }
+
+   $tmpOut .= '</select>';
+  }
+ $Out['data'] = array('html' => $tmpOut,'content' => $Data['content']);
+ }
+
+
+//-------------------------------------------------------------------------------
+//ACTION: add banner
+//-------------------------------------------------------------------------------
+ if($action == 'actionAddBanner'){
+ $Data = array(
+ 'banner_id' => (isset($_REQUEST['BannerID']) && $_REQUEST['BannerID'] != '') ? $_REQUEST['BannerID'] : '',
+ 'banner_name' => TextToDB($_REQUEST['Name']),
+ 'block_status' => $_REQUEST['BlockStatus'],
+ 'total' => (int)$_REQUEST['Total'], 
+ 'elements' => array(),
+ 'is_data' => false,
+ 'mandatory' => array('banner_name','block_status')
+ );
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Data['elements'][$Lang['VALUE']] = array();
+  }
+
+
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(in_array($Key,$Data['mandatory']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+  
+  for($i=0; $i<$Data['total']; $i++){
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+   $Title =  TextToDB($_REQUEST['Title_'.$i.'_'.$Key]);
+   $Text =  TextToDB($_REQUEST['Text_'.$i.'_'.$Key]);
+    if($Title != '' && $Text != ''){
+	$Data['elements'][$Lang['VALUE']][] = array('title' => $Title, 'text' => $Text);
+    $Data['is_data'] = true;
+	}
+   }
+  }
+//printr($Data);
+  if($Error == '' && !$Data['is_data'])$Error = tr('MSG_ERROR_ENTER_BANNERS_DATA',0);
+/*
+  if($Error == ''){
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+    if(!empty($Data['elements'][$Lang['VALUE']]['elements']) && ($Data['elements'][$Lang['VALUE']]['name'] == '' || $Data['elements'][$Lang['VALUE']]['block_status'] == '')) $Error = tr('MSG_ERROR_ENTER_BANNER_INFO',0);
+   }
+  }
+*/
+  
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else{
+   if($Data['banner_id'] == ''){
+   $Query = "INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."banners SET name='".$Data['banner_name']."',block_status=".(int)$Data['block_status'].",create_date=NOW(), create_user=".(int)$MYVAR['USER']['ID'];
+   $Ds=$SQL->Insert($Query);
+   
+   $Query = "SELECT id FROM ".$MYVAR['MYSQL']['PREFIX']."banners ORDER BY id DESC LIMIT 1";
+   $Ds=$SQL->Select($Query);
+    if(empty($Ds))$Data['banner_id'] = 1;
+    else $Data['banner_id'] = $Ds[0]['id'];
+   }
+   else {
+   $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."banners SET name='".$Data['banner_name']."',block_status=".(int)$Data['block_status'].",update_date=NOW(), update_user=".(int)$MYVAR['USER']['ID']." WHERE id=".(int)$Data['banner_id'];
+   $Ds=$SQL->Update($Query);
+   }
+   
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."banner_details WHERE banner_id=".(int)$Data['banner_id'];
+   $Ds=$SQL->Delete($Query);
+   
+   foreach($Data['elements'] AS $LangID => $Value){
+    foreach($Value as $Key => $Value1){
+    $Query = "INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."banner_details SET banner_id=".(int)$Data['banner_id'].", lang_id=".(int)$LangID.", title='".$Value1['title']."',text='".$Value1['text']."'";
+    $Ds1=$SQL->Insert($Query);
+    }
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+
+//-------------------------------------------------------------------------------
+//ACTION: block banner
+//-------------------------------------------------------------------------------
+ if($action == 'actionBlockBanner'){
+ $Data = array(
+ 'block_status' => (isset($_REQUEST['BlockStatus']) && $_REQUEST['BlockStatus'] != '') ? $_REQUEST['BlockStatus'] : '',
+ 'total_fields' => (isset($_REQUEST['TotalFields']) && $_REQUEST['TotalFields'] != '') ? $_REQUEST['TotalFields'] : ''
+ );
+ 
+  if($Data['block_status'] != ''){
+   for($i=0;$i<(int)$Data['total_fields'];$i++){
+   $BannerID = (isset($_REQUEST['Banner_'.$i]) && $_REQUEST['Banner_'.$i] != '') ? $_REQUEST['Banner_'.$i] : '';
+
+    if($BannerID!=''){
+    $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."banners SET block_status=".(int)$Data['block_status'].",update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$BannerID;
+    $Ds=$SQL->Update($Query);
+    }
+   } 
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+
+
+//-------------------------------------------------------------------------------
+//ACTION: delete banner
+//-------------------------------------------------------------------------------  
+ if($action == 'actionDeleteBanner' && userPermission('271')){
+ $Data = array(
+ 'banner_id' => (isset($_REQUEST['BannerID']) && $_REQUEST['BannerID'] != '') ? $_REQUEST['BannerID'] : ''
+ );
+
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."banners WHERE id=".(int)$Data['banner_id'];
+ $Ds=$SQL->Delete($Query);
+
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."banner_details WHERE banner_id=".(int)$Data['banner_id'];
+ $Ds=$SQL->Delete($Query);
+ } 
+?>

@@ -1,0 +1,171 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$Data = array(
+'module_id' => (isset($_REQUEST['ModuleID']) && $SQL->GetSQLData($_REQUEST['ModuleID'],'module_id',$MYVAR['MYSQL']['PREFIX'].'modules','id') != '') ? $_REQUEST['ModuleID'] : '',
+'button' => tr('BTTN_ADD',0),
+'readonly' => 0
+);
+
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ ${'Title_'.$Key} = '';
+ ${'Description_'.$Key} = '';
+ ${'Text_'.$Key} = '';
+ ${'BlockStatus_'.$Key} = '';
+ ${'CreateUser_'.$Key} = '';
+ ${'CreateDate_'.$Key} = '';
+ ${'UpdateUser_'.$Key} = '';
+ ${'UpdateDate_'.$Key} = '';
+ ${'ThisModuleID_'.$Key} = '';
+ ${'PositionArray_'.$Key} = array();
+ }
+  
+ if($Data['module_id'] != ''){
+ $Data['button'] = tr('BTTN_SAVE',0);
+ 
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE module_id=".(int)$Data['module_id']." AND lang_id=".(int)$Lang['VALUE'];
+  $Ds=$SQL->Select($Query);
+   if($Ds){
+   ${'Title_'.$Key} = strhtml($Ds[0]['title']);
+   ${'Description_'.$Key} = strhtml($Ds[0]['description']);
+   ${'Text_'.$Key} = strhtml($Ds[0]['text']);
+   ${'BlockStatus_'.$Key} = $Ds[0]['block_status'];
+   ${'CreateUser_'.$Key} = $Ds[0]['create_user'];
+   ${'CreateDate_'.$Key} = $Ds[0]['create_date'];
+   ${'UpdateUser_'.$Key} = $Ds[0]['update_user'];
+   ${'UpdateDate_'.$Key} = $Ds[0]['update_date'];
+   ${'ThisModuleID_'.$Key} = $Ds[0]['id'];
+   ${'PositionArray_'.$Key} = explode(',',$Ds[0]['position']);
+   $Data['readonly'] = $Ds[0]['readonly'];
+   }
+  }
+ }
+
+
+$Colspan = (sizeof($MYVAR['LANGS']) == 1) ? 2 : sizeof($MYVAR['LANGS']);
+$LangColspan = (sizeof($MYVAR['LANGS']) == 1) ? ' colspan="2"' : '';
+
+
+
+echo'
+<script type="text/javascript" src="/my/ckeditor/ckeditor.js"></script>
+
+<form name="ActionForm" method="post" action="" id="id-formModule">
+<table width="100%" class="table-class1">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_TITLE').' ('.$Lang['lang_long'].')<br/>
+ <input type="text" name="Title_'.$Key.'" class="Design width300" value="'.${'Title_'.$Key}.'"/></td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+<td class="table-row1" colspan="'.$Colspan.'" id="EditorToolbar"><!----></td>
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_DESCRIPTION').'<br/>
+ <textarea rows="5" cols="30" name="Description_'.$Key.'" class="Design width200">'.${'Description_'.$Key}.'</textarea></td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+';
+$JS = '';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_TEXT').'<br/>
+ <textarea name="Text_'.$Key.'" id="Text_'.$Key.'">'.${'Text_'.$Key}.'</textarea> 
+ </td>
+ ';
+ 
+ $JS .= "
+CKEDITOR.replace( 'Text_".$Key."',
+	{
+	customConfig : '/my/ckeditor/my_config.js',
+	toolbar: 'Section',
+	height: '200px',
+	enterMode : CKEDITOR.ENTER_BR,
+	shiftEnterMode: CKEDITOR.ENTER_P,
+	sharedSpaces :
+		{
+		top : 'EditorToolbar',
+		bottom : 'EditorStatusbar'
+		}
+    }); 
+
+CKEDITOR.replace( 'Description_".$Key."',
+	{
+	customConfig : '/my/ckeditor/my_config.js',
+	toolbar: 'Section',
+	height: '100px',
+	enterMode : CKEDITOR.ENTER_BR,
+	shiftEnterMode: CKEDITOR.ENTER_P,
+	sharedSpaces :
+		{
+		top : 'EditorToolbar',
+		bottom : 'EditorStatusbar'
+		}
+    }); 
+ ";
+ }
+
+echo'
+</tr>
+<tr>
+<td class="table-row1" colspan="'.$Colspan.'" id="EditorStatusbar"><!----></td>
+</tr>
+<tr>
+<td class="table-row1" colspan="'.($Colspan-1).'" >'.tr('STR_DELETABLE').'</td>
+<td class="table-row1">
+<input type="radio" name="ReadOnly" value="0"'.CheckRadio($Data['readonly'],'0').'/> '.tr('STR_YES').'
+<input type="radio" name="ReadOnly" value="1"'.CheckRadio($Data['readonly'],'1').'/> '.tr('STR_NO').'
+</td>
+</tr>
+<tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ ${'PositionArray_'.$Key} = (!isset(${'PositionArray_'.$Key})) ? array() : ${'PositionArray_'.$Key}; 
+ echo'
+ <td class="table-row1"'.$LangColspan.'>'.tr('STR_BLOCK_STATUS').': 
+ <select name="BlockStatus_'.$Key.'" class="Design">
+ <option value=""><!----></option>
+ <option value="0"'.CheckSelect('0',${'BlockStatus_'.$Key}).'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+ <option value="1"'.CheckSelect('1',${'BlockStatus_'.$Key}).'>'.tr('STR_BLOCK_STATUS_1',1).'</option>
+ </select> <br/>
+ 
+  <br/><br/>'.tr('STR_AVAILABLE_FOR_POSITION').'<br/>
+ <input type="checkbox" name="Position_'.$Key.'_0" value="top"'.((in_array('top',${'PositionArray_'.$Key})) ? 'checked' : '').'/>'.tr('STR_TOP').'
+ <input type="checkbox" name="Position_'.$Key.'_1" value="center"'.((in_array('center',${'PositionArray_'.$Key})) ? 'checked' : '').'/>'.tr('STR_CENTER').'
+ <input type="checkbox" name="Position_'.$Key.'_2" value="bottom"'.((in_array('bottom',${'PositionArray_'.$Key})) ? 'checked' : '').'/>'.tr('STR_BOTTOM').'
+  <br/><br/>
+ '.myCreateUpdateDate(${'CreateUser_'.$Key},${'CreateDate_'.$Key}).' '.myCreateUpdateDate(${'UpdateUser_'.$Key},${'UpdateDate_'.$Key}).'
+ <input type="hidden" name="LangID_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+ <input type="hidden" name="ThisModuleID_'.$Key.'" value="'.${'ThisModuleID_'.$Key}.'"/>
+ </td>
+ ';
+ }
+echo'
+</tr>
+<tr>
+<td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>$Data['button'],'onclick'=>'actionAddModule({\'redirect\' : \'?SubId=250\'})')).'
+<input type="hidden" name="ModuleID" value="'.$Data['module_id'].'"/>
+</td></tr></table>
+</form>
+<script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/modules.js"></script>
+
+<script type="text/javascript" language="javascript"> 
+'.$JS.'
+</script>
+';
+
+?>

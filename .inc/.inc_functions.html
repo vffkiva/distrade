@@ -1,0 +1,886 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_vars.html';
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_mysql.html';
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_mysql_vars.html';
+
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_dbtree_mysql.html';
+$db = new db($MYVAR['MYSQL']['HOST'],$MYVAR['MYSQL']['USER'],$MYVAR['MYSQL']['PASS'],$MYVAR['MYSQL']['DB']);
+require_once $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_dbtree.html';
+$dbtree = new dbtree($MYVAR['MYSQL']['PREFIX'].'menu', 'section', $db);
+$dbtree1 = new dbtree($MYVAR['MYSQL']['PREFIX'].'menu', 'section', $db);
+
+
+function SPACE($Width,$Height){
+global $MYVAR;
+return '<img src="'.$MYVAR['HTTP'].'img/spacer.gif" width="'.$Width.'" height="'.$Height.'" border="0"/>';
+}
+
+function printr($Arr){
+echo'<pre>';
+print_r($Arr);
+echo'</pre>';
+}
+
+function Table2Arr($Query,$Name,$Key,$DBKeys=''){
+global $SQL;
+$Out = array();
+ if($DBKeys!=''){
+ $Keys = explode("|",$DBKeys);
+ $SizeKeys = sizeof($Keys);
+ }
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $NR=$SQL->rows;
+ $CR=0;
+  while($CR<$NR){
+  $Out[$CR]['TEXT'] = $Ds[$CR][$Name];
+  $Out[$CR]['VALUE'] = $Ds[$CR][$Key];
+   if($DBKeys!=''){
+    for($i=0;$i<$SizeKeys;$i++){
+    $Out[$CR][$Keys[$i]] = $Ds[$CR][$Keys[$i]];
+    }
+   }
+  $CR++;
+  }
+ }
+return $Out;
+}
+
+
+
+
+
+function searchForBlock($Arr,$Type,$ItemID){
+ if(is_array($Arr)){
+  foreach($Arr as $Key => $Array){
+   if($Array['TYPE'] == $Type && $Array['ID'] == $ItemID){
+   return $Key;
+   } 
+  }
+ }
+return 9999;
+}
+
+
+function treeChilds($ID,$Key=''){
+global $SQL,$MYVAR;
+$Query = "SELECT section_left,section_right,section_level FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id='".$ID."'";
+$Ds=$SQL->Select($Query);
+$LeftKey = $Ds[0]['section_left'];
+$RightKey = $Ds[0]['section_right'];
+$Level = $Ds[0]['section_level'];
+
+$IfMode = ($Key!='childs')?" AND section_level='".($Level+1)."'":"";
+
+$Query = "SELECT section_id FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_left>='".$LeftKey."' AND section_right<='".$RightKey."'".$IfMode." ORDER BY section_left";
+$Ds=$SQL->Select($Query);
+return $Ds;
+}
+
+
+function treeChildren($ID,$Details=true){
+global $SQL,$MYVAR;
+$Out = array();
+$Query = "SELECT section_left,section_right,section_level FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id='".$ID."'";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $LeftKey = $Ds[0]['section_left'];
+ $RightKey = $Ds[0]['section_right'];
+ $Level = $Ds[0]['section_level'];
+
+ $Query = "SELECT section_id,type,is_href,link_subid,section_level FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_left>='".$LeftKey."' AND section_right<='".$RightKey."' ORDER BY section_left";
+ echo $Query;
+ $Ds=$SQL->Select($Query);
+ 
+ if($Ds){
+  $NR=$SQL->rows;
+  $CR=0;
+   while($CR<$NR){
+    if(!$Details)$Out[$CR] = $Ds[$CR]['section_id'];
+    else $Out[$CR] = $Ds[$CR];
+   $CR++;
+   }
+  }
+ }
+return $Out;
+}
+
+
+function treeParents($ID,$Details=true){
+global $SQL,$MYVAR;
+$Out = array();
+$Query = "SELECT section_left,section_right,section_level FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id='".$ID."'";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $LeftKey = $Ds[0]['section_left'];
+ $RightKey = $Ds[0]['section_right'];
+ $Level = $Ds[0]['section_level'];
+ 
+ $Query = "SELECT section_id,type,is_href,link_subid,section_level FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_left<='".$LeftKey."' AND section_right>='".$RightKey."' ORDER BY section_left";
+ $Ds=$SQL->Select($Query);
+  if($Ds){
+  $NR=$SQL->rows;
+  $CR=0;
+   while($CR<$NR){
+    if(!$Details)$Out[$CR] = $Ds[$CR]['section_id'];
+    else $Out[$CR] = $Ds[$CR];
+   $CR++;
+   }
+  } 
+ } 
+return $Out;
+}
+
+
+function showTitle($PageID){
+global $MYVAR,$SQL;
+$Out = '';
+$Parents = array();
+$Parents = treeParents($PageID);
+$Children = treeChilds($PageID);
+$ParentsStr = '';
+$ChildrenStr = '';
+array_shift($Parents);
+array_pop($Parents);
+//array_shift($Children);
+
+
+ if(sizeof($Parents) > 0){
+  foreach($Parents AS $Key => $Value){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id=".(int)$Value['section_id'];
+  $DsD=$SQL->Select($Query);
+  $Onclick = '';
+   if($DsD[0]['type'] == 0)$Onclick = '?_page='.$Value['section_id'];
+   if($DsD[0]['link_subid'] != 0)$Onclick = '?_page='.$DsD[0]['link_subid'];
+   $Onclick .= ($DsD[0]['is_href']!='') ? $DsD[0]['is_href'] : '';
+  $Onclick = ($Onclick!='') ? ' onclick="window.location=\''.$Onclick.'\';"' : '';
+  $ParentsStr .= '<span class="section-title-item main-href"'.$Onclick.'>'.netViewNode($Value['section_id']).'</span>'.(($Key < sizeof($Parents)-1) ? '<span class="section-title-arrow">&raquo;</span>':'');
+  }
+ }
+ if($Parents != '')$ParentsStr = '<div class="section-title-parents">'.$ParentsStr.'</div>';
+
+ 
+ if(sizeof($Children) > 0){
+  foreach($Children AS $Key => $Value){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id=".(int)$Value['section_id'];
+  $DsD=$SQL->Select($Query);
+  $Onclick = '';
+   if($DsD[0]['type'] == 0)$Onclick = '?_page='.$Value['section_id'];
+   if($DsD[0]['link_subid'] != 0)$Onclick = '?_page='.$DsD[0]['link_subid'];
+  $Onclick .= ($DsD[0]['is_href']!='') ? $DsD[0]['is_href'] : '';
+  $Onclick = ($Onclick!='') ? ' onclick="window.location=\''.$Onclick.'\';"' : '';
+  
+  $ChildrenStr .= '<span class="section-title-item main-href"'.$Onclick.'>'.netViewNode($Value['section_id']).'</span>'.(($Key < sizeof($Children)-1) ? '<span class="section-title-arrow">&raquo;</span>':'');
+  }
+ }
+
+ if($ChildrenStr != '') $ChildrenStr = '<div class="section-title-children">'.$ChildrenStr.'</div>';
+
+$Style = '';
+$Query = "SELECT title_style FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id=".(int)$PageID." AND lang_id=".(int)$MYVAR['LANG_ID'];
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds) && $Ds[0]['title_style']!='')$Style = ' style="'.$Ds[0]['title_style'].'"';
+
+ 
+//$Out = $ParentsStr.'<div class="section-title"'.$Style.'>'.netViewNode($PageID).'</div>'.$ChildrenStr;
+$Out = '<div class="section-title"'.$Style.'>'.netViewNode($PageID).'</div>';
+return $Out;
+}
+
+function selectBlocks(){
+global $MYVAR,$SQL;
+
+$BLOCKS = array();
+$BLOCKS['ITEMS'] = array();
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE position IN ('LEFT','RIGHT','TOP') AND lang_id='".$MYVAR['LANG_ID']."' ORDER BY position";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $NR=$SQL->rows;
+ $CR=0;
+  while($CR<$NR){
+   if(!isset($BLOCKS['ITEMS'][$Ds[$CR]['position']]) || !is_array($BLOCKS['ITEMS'][$Ds[$CR]['position']]))$BLOCKS['ITEMS'][$Ds[$CR]['position']] = array();
+  
+   
+   if($Ds[$CR]['module_type'] == 'news-list'){
+   $NewsPerBlock = (isset($MYVAR['VARS']['news_per_block']) && is_numeric($MYVAR['VARS']['news_per_block'])) ? $MYVAR['VARS']['news_per_block'] : 3;
+   $NewsLength = (isset($MYVAR['VARS']['news_length']) && is_numeric($MYVAR['VARS']['news_length'])) ? $MYVAR['VARS']['news_length'] : 100;
+   $Type = $Ds[$CR]['module_type'];
+   $Title = tr('STR_NEWS_TITLE');
+   $Description = '';
+   
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id='".$MYVAR['LANG_ID']."' AND block_status='0' ORDER BY date DESC LIMIT 0,".$NewsPerBlock."";
+   $Ds1=$SQL->Select($Query);
+    foreach($Ds1 as $Key => $Value){
+    $Description .= '
+    <div class="news-date">'.myDate($Value['date']).'</div>
+    <div class="news-title"><a class="main-href grey-href" href="?_news='.$Value['id'].'">'.TextFromDB($Value['title']).'</a></div>
+    <div class="news-description">'.iconv_substr(TextFromDB($Value['description']),0,$NewsLength,'UTF-8').' <a class="main-href" href="?_news='.$Value['id'].'">...</a></div>
+    ';
+    }
+   
+   $Nr = sizeof($BLOCKS['ITEMS'][$Ds[$CR]['position']]);
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TYPE'] = $Type;
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['ID'] = '';
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DATE'] = '';
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TITLE'] = tr('STR_NEWS_TITLE');
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DESCR'] = $Description;
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TEXT'] = '';
+   $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['POSITION'] = $Ds[$CR]['position'];
+   }
+   
+   if($Ds[$CR]['module_type'] == 'news-all' || $Ds[$CR]['module_type'] == 'news'){
+   $Type = 'news';
+    if($Ds[$CR]['module_type'] == 'news')$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id='".$MYVAR['LANG_ID']."' AND block_status='0' AND id='".$Ds[$CR]['module_id']."'";
+    else $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id='".$MYVAR['LANG_ID']."' AND block_status='0' ORDER BY date DESC";
+   $DsN=$SQL->Select($Query);
+    if($DsN){
+    $NRN=$SQL->rows;
+    $CRN=0;
+     while($CRN<$NRN){
+      if(searchForBlock($BLOCKS['ITEMS'][$Ds[$CR]['position']],$Type,$DsN[$CRN]['id']) == 9999){
+      $Nr = sizeof($BLOCKS['ITEMS'][$Ds[$CR]['position']]);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TYPE'] = $Type;
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['ID'] = $DsN[$CRN]['id'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DATE'] = $DsN[$CRN]['date'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TITLE'] = TextFromDB($DsN[$CRN]['title']);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DESCR'] = TextFromDB($DsN[$CRN]['description']);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TEXT'] = $DsN[$CRN]['text'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['POSITION'] = $Ds[$CR]['position'];
+      }
+     $CRN++;
+     }
+    }
+   }
+  
+   if($Ds[$CR]['module_type'] == 'offers-all' || $Ds[$CR]['module_type'] == 'offers'){
+   $Type = 'offers';
+    if($Ds[$CR]['module_type'] == 'offers')$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."offers WHERE lang_id='".$MYVAR['LANG_ID']."' AND block_status='0' AND id='".$Ds[$CR]['module_id']."'";
+    else $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."offers WHERE lang_id='".$MYVAR['LANG_ID']."' AND block_status='0' ORDER BY nr ASC, date DESC, title ASC";
+   $DsN=$SQL->Select($Query);
+    if($DsN){
+    $NRN=$SQL->rows;
+    $CRN=0;
+     while($CRN<$NRN){
+      if(searchForBlock($BLOCKS['ITEMS'][$Ds[$CR]['position']],$Type,$DsN[$CRN]['id']) == 9999){
+      $Nr = sizeof($BLOCKS['ITEMS'][$Ds[$CR]['position']]);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TYPE'] = $Type;
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['ID'] = $DsN[$CRN]['id'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DATE'] = $DsN[$CRN]['date'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TITLE'] = TextFromDB($DsN[$CRN]['title']);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DESCR'] = TextFromDB($DsN[$CRN]['description']);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TEXT'] = $DsN[$CRN]['text'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['POSITION'] = $Ds[$CR]['position'];
+      }
+     $CRN++;
+     }
+    }
+   }
+
+
+   if($Ds[$CR]['module_type'] == 'modules'){
+   $Type = 'modules';
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE lang_id='".$MYVAR['LANG_ID']."' AND block_status='0' AND id='".$Ds[$CR]['module_id']."'";
+   $DsN=$SQL->Select($Query);
+    if($DsN){
+    $NRN=$SQL->rows;
+    $CRN=0;
+     while($CRN<$NRN){
+      if(searchForBlock($BLOCKS['ITEMS'][$Ds[$CR]['position']],$Type,$DsN[$CRN]['id']) == 9999){
+      $Nr = sizeof($BLOCKS['ITEMS'][$Ds[$CR]['position']]);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TYPE'] = $Type;
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['ID'] = $DsN[$CRN]['id'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DATE'] = '';
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TITLE'] = TextFromDB($DsN[$CRN]['title']);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['DESCR'] = TextFromDB($DsN[$CRN]['description']);
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['TEXT'] = $DsN[$CRN]['text'];
+      $BLOCKS['ITEMS'][$Ds[$CR]['position']][$Nr]['POSITION'] = $Ds[$CR]['position'];
+      }
+     $CRN++;
+     }
+    }
+   }
+
+  $CR++;
+  }
+ }
+
+
+$BLOCKS['GENERAL']['LEFT'] = (isset($BLOCKS['ITEMS']['LEFT'])) ? sizeof($BLOCKS['ITEMS']['LEFT']) : 0;
+$BLOCKS['GENERAL']['RIGHT'] = (isset($BLOCKS['ITEMS']['RIGHT'])) ? sizeof($BLOCKS['ITEMS']['RIGHT']) : 0;
+$BLOCKS['GENERAL']['TOTAL'] = $BLOCKS['GENERAL']['LEFT'] + $BLOCKS['GENERAL']['RIGHT'];
+return $BLOCKS;
+}
+
+
+function netViewNode($NodeID){
+global $SQL,$MYVAR;
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id='".$NodeID."' AND lang_id='".$SQL->GetSQLData($MYVAR['LANG'],'lang_system',$MYVAR['MYSQL']['PREFIX'].'lang','id')."'";
+$Ds=$SQL->Select($Query);
+return $Ds[0]['text'];
+}
+
+
+function userPermission($SubId,$UserID=''){
+global $MYVAR,$SQL;
+$UserID = ($UserID=='')?$MYVAR['USER']['ID']:$UserID;
+$GroupID = $SQL->GetSQLData($UserID,'id',$MYVAR['MYSQL']['PREFIX'].'users_list','type_id');
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id='".$SubId."' AND FIND_IN_SET('".$GroupID."',perm)>0";
+$Ds=$SQL->Select($Query);
+$NR=$SQL->rows;
+ if($Ds && $NR>0) return true;
+return false;
+}
+
+
+function WriteToSession($Var,$Value){
+$_SESSION[$Var] = $Value;
+}
+
+
+function unsetSession($Exceptions = array()){
+ foreach($_SESSION as $Key => $Value){
+  if(!in_array($Key,$Exceptions))unset($_SESSION[$Key]);
+ }
+}
+
+
+function unsetSessionSelected($Keys = array()){
+ foreach($Keys as $Nr => $Value){
+  if(isset($_SESSION['Value']))unset($_SESSION[$Value]);
+ }
+}
+
+
+/*
+//function myButton($Text,$Type='submit',$Style='brown',$Onclick=''){
+//$Text = strip_tags($Text);
+function myButton($Options){
+$Defaults = array('text' => '', 'style' => 'main', 'type' => 'button', 'onclick' => '', 'id' => '');
+$Opts = array_merge($Defaults, $Options);
+$Opts['text'] = strip_tags($Opts['text']);
+
+//return '<span class="action-button"'.(($Opts['onclick']!='')?' onClick="'.$Opts['onclick'].'"':'').(($Opts['id']!='')?' id="'.$Opts['id'].'"':'').'>'.$Opts['text'].'</span>';
+//}
+
+return '<ul class="bttn-'.$Opts['style'].'"><li class="bttn-start"><!----></li><li class="bttn-center"><input type="'.$Opts['type'].'" onmouseout="inputOut(this,[\'-680px\',\'0\',\'-3px\',\'-414px\']);" onmouseover="inputOver(this,[\'-720px\',\'0\',\'-3px\',\'-414px\']);" value="'.$Opts['text'].'" class="bttn-form" onClick="'.$Opts['onclick'].'"/><span class="bttn-arrow-right"><!----></span></li> <li class="bttn-end"><!----></li></ul>';
+}
+*/
+
+function myButton($Options){
+$Defaults = array('text' => '', 'style' => '', 'onclick' => '', 'id' => '', 'style' => '');
+$Opts = array_merge($Defaults, $Options);
+$Opts['text'] = strip_tags($Opts['text']);
+return '
+ <span class="action-button"'.
+ (($Opts['onclick']!='')?' onClick="'.$Opts['onclick'].'"':'').
+ (($Opts['id']!='')?' id="'.$Opts['id'].'"':'').
+ (($Opts['style']!='')?' style="'.$Opts['style'].'"':'').
+ '>'.$Opts['text'].'</span>
+';
+}
+
+
+function tr($name){
+global $MYVAR;
+ if(defined('TR_'.$MYVAR['LANG'].'_'.$name)) return constant('TR_'.$MYVAR['LANG'].'_'.$name); 
+ else return strhtml($name);
+}
+
+
+function strhtml($string){
+return stripslashes(htmlspecialchars($string,ENT_COMPAT,'UTF-8'));
+}
+
+
+function TextFromDB($Text){
+$IN = array('<b>','</b>','<i>','</i>','<u>','</u>','&nbsp;');
+$OUT = array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[space]');
+$Text = str_replace($OUT,$IN,$Text);
+$Text = str_replace("\n","<br/>",$Text);
+$Text = str_replace("[n]","<br/>",$Text);
+$Text = stripslashes($Text);
+return $Text;
+}
+
+function akrem($array,$key){
+    $holding=array();
+    foreach($array as $k => $v){
+        if($key!=$k){
+            $holding[$k]=$v;
+        }
+    }   
+    return $holding;
+}
+
+
+
+
+
+
+function showSideBlock($Arr){
+//myprint($Arr);
+$KeyName = '';
+$KeyValue = $Arr['ID'];
+$Text = TextFromDb($Arr['DESCR']);
+$Title = TextFromDb($Arr['TITLE']);
+
+ if($Arr['TYPE'] == 'offers')$KeyName = '_offer';
+ if($Arr['TYPE'] == 'modules')$KeyName = '_module';
+ if($Arr['TYPE'] == 'news')$KeyName = '_news'; 
+
+$Out = '
+<div class="block-container">
+ <div class="block-title">'.$Title.'</div>
+ <div class="delimetr-horizontal-'.strtolower($Arr['POSITION']).'"><!----></div>
+ <div class="block-text">'.$Text.'</div>
+ '.(($Arr['TEXT'] != '') ? '<div class="block-button">'.myButton(tr('BTTN_MORE'),'button',$Style='pink','window.location=\'?'.$KeyName.'='.$KeyValue.'\'').'</div>' : '').'
+</div>
+';
+return $Out;
+}
+
+
+//$string = 'XYZ';
+//if (eregi('z', $string)) {
+//    echo "";
+//}
+
+//print_r($_SESSION);
+//phpinfo();
+//	if(@file_exists($_SERVER['DOCUMENT_ROOT'].'/tools/_date.html')){
+//	$Data =  file($_SERVER['DOCUMENT_ROOT'].'/tools/_date.html');
+//	$Dates = explode(',', $Data[0]);
+	//print_r($Dates);
+//		if(in_array(date("d"),$Dates)){
+		//echo 'rand active';
+		//$rand = rand(0,5);
+//		$rand = rand(15,20);
+//		sleep($rand);
+//		}
+//	}
+
+
+
+function showTopBlock($Arr){
+//@Arr = array('TYPE','ID','DATE','TITLE','DESCR','TEXT');
+
+$KeyName = '';
+$KeyValue = $Arr['ID'];
+
+ if($Arr['TYPE'] == 'offers')$KeyName = '_offer';
+ if($Arr['TYPE'] == 'modules')$KeyName = '_module';
+ if($Arr['TYPE'] == 'news')$KeyName = '_news';
+
+$Out = '
+<div class="top-block-container">
+ <div class="top-block-title">'.TextFromDB($Arr['TITLE']).'</div>
+ <div class="top-block-text">'.TextFromDB($Arr['DESCR']).'</div>
+ '.(($Arr['TEXT'] != '') ? '<div class="block-button">'.myButton(tr('BTTN_MORE'),'button',$Style='pink','window.location=\'?'.$KeyName.'='.$KeyValue.'\'').'</div>' : '').'
+</div>
+';
+
+return $Out;
+}
+
+
+function showFooterBlock($ModuleID){
+global $MYVAR,$SQL;
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE module_id='".$ModuleID."' AND lang_id='".$MYVAR['LANG_ID']."'";
+$Ds=$SQL->Select($Query);
+$Text = TextFromDB($Ds[0]['description']);
+$Out = '
+<div class="footer-block-container">
+ <div class="footer-block-text">'.$Text.'</div>
+</div>
+';
+return $Out;
+}
+
+
+
+function showGallery($GalleryID){
+global $MYVAR,$SQL;
+$Out = '';
+$QueryPart = '';
+ if($GalleryID != 'all' || is_numeric($GalleryID))$QueryPart = " AND gallery_id='".$GalleryID."'";
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."gallery WHERE block_status='0' AND lang_id='".$MYVAR['LANG_ID']."'".$QueryPart;
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ 
+ $Out .= '<div id="tab-nr-'.$MYVAR['UNIQUE'].'" class="my-tabs"><ul>';
+  foreach($Ds AS $Key => $Value){
+  $Out .= '
+  <li>
+  <a href="/tools/ajax.html?action=actionGetGalleryPics&GalleryID='.$Value['gallery_id'].'"><span>'.TextFromDB($Value['name']).'</span></a>
+  </li>
+  ';
+  }
+ $Out .= '
+ </ul>
+  <div id="tab-content-'.$MYVAR['UNIQUE'].'"><!----></div>
+ </div>
+ ';
+ $MYVAR['UNIQUE']++;
+ }
+
+return $Out;
+}
+
+function showBanner($Options){
+global $MYVAR,$SQL;
+$Opts = array_merge(array('banner_id' => ''), $Options);
+
+ if($Opts['banner_id'] != ''){
+ $Query = "
+ SELECT t2.* FROM ".$MYVAR['MYSQL']['PREFIX']."banner_details AS t2 
+ LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."banners AS t1 ON t1.id=t2.banner_id 
+ WHERE t1.id=".(int)$Opts['banner_id']." AND t1.block_status=0 AND t2.lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY t2.id
+ ";
+
+ $Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+  $Tabs = $Texts = '';
+   foreach($Ds as $Key => $Value){
+   $Tabs .= '
+   <li><a href="#tabs-'.$Key.'">'.TextFromDB($Value['title']).'</a></li>
+   ';
+   $Texts .= '
+  <div id="tabs-'.$Key.'">
+  '.TextFromDB($Value['text']).'
+  </div>   
+   ';
+   $MYVAR['UNIQUE']++;
+   }
+  $Out = '
+  <div id="tab-nr-'.$MYVAR['UNIQUE'].'" class="my-tabs my-banner">
+  <ul>
+  '.$Tabs.'
+  </ul>
+  '.$Texts.'
+  </div>
+  ';
+  }
+ }
+
+return $Out;
+}
+
+
+function showMenu($TypeID){
+global $MYVAR,$SQL,$dbtree,$dbtree1,$SubId;
+$dbtree->Full('');
+$Out = '';
+
+$Total = $dbtree->RecordCount(); 
+
+$Nr = 0;
+$PrevLevel = 0;
+
+
+ while ($item = $dbtree->NextRow()) {
+ $Nr++;
+ $dbtree1->Branch($item['section_id'],array('section_id'),array('AND'=>array('FIND_IN_SET('.$TypeID.',A.perm)>0','A.show_menu IN (\'1\')')),FALSE,'');
+ $abc = $dbtree1->RecordCount(); 
+ 
+  if($item['display_text']!='root'){
+   if($abc>0){
+   $dbtree1->Branch($item['section_id'],array('section_id'),array('AND'=>array('FIND_IN_SET('.$TypeID.',A.perm)>0','A.show_menu IN (\'1\')','A.section_id!=\''.$item['section_id'].'\'')),FALSE,'');  
+   $RealChilds = $dbtree1->RecordCount(); 
+   $ShowText = netViewNode($item['section_id']);
+   
+   $TopSelected = '';   
+   $Children = array();
+   $LongTextStyle = '';
+   $Href = "javascript:void(0);";
+   $OnClick = '';
+   $AddHref = '';
+   
+   if($item['section_level'] == '1'){   
+    if(iconv_strlen($ShowText,'UTF-8') >= 15)$LongTextStyle = ' style="padding-bottom:5px;"';
+    if($MYVAR['PAGE_ID']!=''){
+    $Children = treeChildren($item['section_id'],false);
+     if(in_array($MYVAR['PAGE_ID'],$Children)){
+     $LongTextStyle = ($LongTextStyle!='') ? ' style="padding-bottom:10px;"' : '';
+     $TopSelected1 = '
+     <div class="top-menu-active-layer-border">
+      <div class="top-menu-active-layer-dark-background"> 
+      <!---->
+      </div>
+      <div class="top-menu-active-layer-pointer"><!----></div>    
+     </div>
+     ';
+	 }
+    }
+   }
+   
+    if($item['is_href']!='') $AddHref = $item['is_href'];
+    if($item['type'] == 0 || $item['is_id'])$OnClick = '?_page='.$item['section_id'];
+    if($item['link_subid'] != 0)$OnClick = '?_page='.$item['link_subid'];
+	
+   
+   $OnClick = ($OnClick != '') ? ' onclick="window.location=\''.$OnClick.$AddHref.'\';"' : '';
+    
+    if($PrevLevel<$item['section_level']){
+     if($item['section_level'] == 1){
+     $Out .= "\n".str_repeat(' ',$item['section_level'])."<ul class=\"menu-topnav\">\n";
+     $Out .= str_repeat(' ',$item['section_level']).'<li class="menu-topnav">'.$TopSelected.'<span class="menu-topnav-text"'.$OnClick.$LongTextStyle.'><span class="text">'.$ShowText.'</span><span class="arrow"><!----></span></span>';
+     }
+     else {
+     $Out .= "\n".str_repeat(' ',$item['section_level'])."<ul>\n";
+     $Out .= str_repeat(' ',$item['section_level']).'<li><a href="'.$Href.'"'.$OnClick.'>'.$ShowText.'</a>';
+     }
+     if($RealChilds == 0)$Out .= "</li>";
+    }
+    
+    if($PrevLevel == $item['section_level']){
+     if($item['section_level'] == 1){
+     $Out .= "\n".str_repeat(' ',$item['section_level']).'<li class="menu-topnav">'.$TopSelected.'<span class="menu-topnav-text"'.$OnClick.$LongTextStyle.'><span class="text">'.$ShowText.'</span><span class="arrow"><!----></span></span>';
+	 }
+     else {
+     $Out .= "\n".str_repeat(' ',$item['section_level']).'<li><a href="'.$Href.'"'.$OnClick.'>'.$ShowText.'</a>';
+     }
+    if($RealChilds == 0)$Out .= "</li>";
+    }
+    
+    if($PrevLevel>$item['section_level']){
+    $Start = $PrevLevel-$item['section_level'];
+     for($i=0;$i<$Start;$i++){
+     $level = $PrevLevel-$i;
+     $Out .= "\n".str_repeat(' ',$level)."</ul>\n".str_repeat(' ',$level-1).'</li>';
+     }	
+     if($item['section_level'] == 1){
+     $Out .= "\n".str_repeat(' ',$item['section_level']).'<li class="menu-topnav">'.$TopSelected.'<span class="menu-topnav-text"'.$OnClick.$LongTextStyle.'><span class="text">'.$ShowText.'</span><span class="arrow"><!----></span></span>';
+	 }
+	 else $Out .= "\n".str_repeat(' ',$item['section_level']).'<li><a href="'.$Href.'"'.$OnClick.'>'.$ShowText.'</a>';
+    }    
+   
+   $PrevLevel = $item['section_level']; 
+
+   }
+  }
+    if($Nr == $Total-1) {
+    }
+ } 
+
+$Out = '
+<div id="smoothmenu1" class="ddsmoothmenu">
+'.$Out.'
+</ul>
+<br style="clear: left"/>
+</div>
+';
+
+return $Out;
+}
+
+
+
+function myDate($In){
+$H='';
+$Min='';
+$H1='';
+$Tmp = explode(" ",$In);
+list($Y,$M,$D) = explode("-",$Tmp[0]);
+
+ if(isset($Tmp[1]) && $Tmp[1]!=''){
+ list($H,$Min,$Sec) = explode(":",$Tmp[1]);
+  if($H !='' && $Min!='')$H1 = ' '.$H.':'.$Min;
+ } 
+return $D.'.'.$M.'.'.$Y.$H1;
+}
+
+
+
+
+
+
+function imageThumb($Data){
+//@params array('ASS','SIZE','SRC','ROOT')
+
+$Allowed = array('jpeg','jpg','png','gif');
+$Image = $Data['ROOT'].rawurldecode($Data['SRC']);
+
+$Tmp = explode('.',$Data['SRC']);
+$Extension = strtolower($Tmp[(sizeof($Tmp)-1)]);
+
+ if(!in_array($Extension,$Allowed)){
+ $Text = 'NOT FOUND';
+ header("Content-Type: image/png");
+ $im = @imagecreate($Data['SIZE'], $Data['SIZE']) or die("Cannot Initialize new GD image stream");
+ $background_color = imagecolorallocate($im, 0, 0, 0);
+ $text_color = imagecolorallocate($im, 233, 14, 91);
+ imagestring($im, 3, round($Data['SIZE']/2-strlen($Text)*3.5), round($Data['SIZE']/2-strlen($Text)),  $Text, $text_color);
+ imagepng($im);
+ imagedestroy($im);
+ }
+ else {
+ $Info = getImageSize($Image);
+ $New = array();
+
+  if($Info['mime'] == 'image/jpeg')$IM = ImageCreateFromJpeg($Image); 
+  if($Info['mime'] == 'image/gif')$IM = ImageCreateFromGIF($Image); 
+  if($Info['mime'] == 'image/png')$IM = imageCreateFromPNG($Image);
+ 
+  if($Data['ASS'] == 'x'){
+  $New['x'] = $Data['SIZE'];
+  $New['y'] = round($Data['SIZE'] / $Info[0] * $Info[1]);
+  }
+  if($Data['ASS'] == 'y'){
+  $New['y'] = $Data['SIZE'];
+  $New['x'] = round($Data['SIZE'] / $Info[1] * $Info[0]);
+  }
+ $newIM = ImageCreateTrueColor ($New['x'],$New['y']);
+//imagecopyresized($new, $from, 0, 0, 0, 0, $New['x'], $New['y'], $width, $height);
+ 
+ imagecopyresampled($newIM, $IM, 0, 0, 0, 0, $New['x'], $New['y'], $Info[0], $Info[1]);
+
+ header("Content-Type: ".$Info['mime']);
+  if($Info['mime'] == 'image/jpeg')imagejpeg($newIM);
+  if($Info['mime'] == 'image/gif')imagegif($newIM);
+  if($Info['mime'] == 'image/png')imagepng($newIM);
+ imagedestroy($newIM);
+ imagedestroy($IM);
+ }
+}
+
+
+function showSection($PageID){
+global $MYVAR,$SQL;
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id='".$PageID."' AND lang_id='".$MYVAR['LANG_ID']."'";
+$Ds=$SQL->Select($Query);
+$Title = $Ds[0]['title'];
+$Text = $Ds[0]['text'];
+$PreviewText = $Ds[0]['preview_text'];
+$ShowGalleries = $Ds[0]['show_galleries'];
+
+ if($Ds[0]['params']!= '' ){
+ $Tmp = explode($MYVAR['DELIMITERS'][3],$Ds[0]['params']);
+ $PARAMS = array();
+  foreach($Tmp AS $Key => $Parameter){
+  list($Var,$Value) = explode($MYVAR['DELIMITERS'][2],$Parameter);
+  $PARAMS[$Var] = $Value;
+  }
+ }
+
+$showTitle = '';
+$showText = '';
+$showButton = '';
+ if(isset($PARAMS['show_title']) && $PARAMS['show_title'] == '1')$showTitle = '<div class="center-title section-title">'.$Title.'</div>';
+ if(isset($PARAMS['show_preview']) && $PARAMS['show_preview'] == 1 && trim(strip_tags($PreviewText)) != ''){
+ $Text = $PreviewText;
+ $showButton = '<div class="center-button">'.myButton(tr('BTTN_MORE'),'button',$Style='pink','window.location=\'?_page='.$PageID.'\';').'</div>';
+ }
+
+$showText = '<div class="center-text">'.$Text.'</div>';
+
+$Out = '
+<table class="chapter">
+<tr><td class="chapter-tl">'.space('4','4').'<!----></td><td class="chapter-t"><!----></td><td class="chapter-tr"><!----></td></tr>
+<tr><td class="chapter-l"><!----></td><td class="chapter-text">
+'.$showTitle.'
+'.$showText.' 
+'.$showButton.' 
+</td><td class="chapter-r"><!----></td></tr>
+<tr><td class="chapter-bl"><!----></td><td class="chapter-b"><!----></td><td class="chapter-br">'.space('4','4').'</td></tr>
+</table>
+';
+ if($ShowGalleries!='') $Out .= '<br/>'.showGallery($ShowGalleries);
+
+return $Out;
+}
+
+
+function getCacheLangVars(){
+global $MYVAR;
+$File = $_SERVER['DOCUMENT_ROOT'].'/cache/tr_cache.html';
+$Out = array();
+$Data = array();
+ if(@file_exists($File))$Data = file($File);
+
+$Data = implode($Data);
+$Data = preg_replace("/\r\n|\n\r|\n|\r/", "",$Data);
+$Pattern = '/define\(\'TR[lv|ru|lt|en|_]+(.*?)\'\,/';
+
+preg_match_all($Pattern,$Data,$Matches);
+ if(!empty($Matches[1]))$Out = $Matches[1];
+
+return $Out;
+}
+
+
+
+function getTextBetweenTags($Options){
+$Opts = array_merge(array('tag'=>'div', 'class'=>'banner-element', 'text'=>''),$Options);
+
+$Out = array();
+$pattern = '/<'.$Opts['tag'].' class="'.$Opts['class'].'"[^>]*>(.*?)<\/'.$Opts['tag'].'>/si';	
+preg_match_all($pattern, $Opts['text'], $matches);
+
+//$pattern = '/<'.$Opts['tag'].' class="'.$Opts['class'].'"[^>]*>(.*?)<\/'.$Opts['tag'].'>/si';	
+//preg_replace($pattern, '<b>$0</b><b>$1</b>', $Opts['text']);
+//printr($matches);
+
+
+ foreach($matches[1] as $Key => $Value){
+// $Value = preg_replace("/\r\n|\n\r|\n|\r/", "",$Value);
+// $Value = str_replace('&quot;','"',$Value);
+ $Out[] = $Value;
+ }
+
+return $Out; 
+//return $Out;
+}
+
+
+
+function prepareSectionText($Options){
+$Opts = array_merge(array('text'=>''),$Options);
+
+$Elements = getTextBetweenTags(array('text'=>$Opts['text']));
+ foreach($Elements as $Key => $Value){
+ $Text = '';
+ $Json = str_replace('&quot;','"',$Value);
+ $Params = json_decode($Json, true);
+ //printr($Params);//echo $Value;
+  if(isset($Params['gallery']) && $Params['gallery'] != ''){
+  $Text = showGallery($Params['gallery']);
+  }
+  if(isset($Params['banner']) && $Params['banner'] != ''){
+  $Text = showBanner(array('banner_id'=>$Params['banner']));
+  } 
+ $Opts['text'] = str_replace($Value, $Text, $Opts['text']);
+ }
+
+ return $Opts['text'];
+}
+
+function actionGetFilterFields($Options){
+$Opts = array_merge(array('key' => ''),$Options);
+ if($Opts['key'] != '' && isset($_SESSION['search']) && isset($_SESSION['search'][$Opts['key']]) && !empty($_SESSION['search'][$Opts['key']])){
+ $Data = array();
+ $Fields = json_decode($_SESSION['search'][$Opts['key']]['fields'], true);
+ $Values = json_decode($_SESSION['search'][$Opts['key']]['values'], true);
+  foreach($Fields AS $Key => $Field) $Data[$Field] = TextFromDB($Values[$Key]);
+ return $Data;
+ }
+ else return array();
+}
+
+
+function CheckRadio($Item,$Value){
+ if($Item == $Value)return ' checked="true"';
+ else return '';
+}
+
+function CheckBox($Item,$Value){
+ if($Item == $Value){return ' CHECKED';}
+ else{return '';}
+}
+
+function CheckSelect($Item,$Value){
+ if((string)$Item === (string)$Value){return ' selected';}
+ else{return '';}
+}
+?>

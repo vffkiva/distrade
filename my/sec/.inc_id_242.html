@@ -1,0 +1,105 @@
+<?php
+$ShowTitle = netViewTree($SubId).' ('.tr('STR_LANGUAGE').': '.$MYVAR['LANG_LONG'].')';
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0 ) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 20;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+$Colspan = 10;
+echo'
+<form name="id-formNews" method="post" action="" id="id-formNews">
+<table width="100%" class="table-class1">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr>
+<td class="table-row2 bold">#</td>
+<td class="table-row2 bold">'.tr('STR_DATE').'</td>
+<td class="table-row2 bold">'.tr('STR_TITLE').'</td>
+<td class="table-row2 bold">'.tr('STR_DESCRIPTION').'</td>
+<td class="table-row2 bold">'.tr('STR_NEWS_ROTATION').'</td>
+<td class="table-row2 bold">'.tr('STR_BLOCK_STATUS').'</td>
+<td class="table-row2 bold">'.tr('STR_DIFFERENT_LANGUAGES').'</td>
+<td class="table-row2 bold">'.tr('STR_CREATED').'</td>
+<td class="table-row3 text-center"><input type="checkbox" name="SelectAll_1" value="set"/></td>
+<td class="table-row2"><!----></td>
+</tr>
+';
+
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id='".$MYVAR['LANG_ID']."' ORDER BY create_date DESC";
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+ for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+  
+ if(empty($Ds))echo'<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+  
+  foreach($Ds AS $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  $DelHref = (userPermission('244')) ? myIcon(array('icon' => 'ui-icon-trash', 'onclick' => 'actionDeleteNews({\'redirect\' : \'?SubId='.$SubId.'\', \'news_id\' : \''.$Value['id'].'\'})')) : '';
+  $EditHref = (userPermission('241')) ? myIcon(array('icon' => 'ui-icon-pencil', 'onclick' => 'window.location=\'?SubId=241&amp;NewsID='.$Value['news_id'].'\'')) : '';
+  
+  //$Description = iconv_substr(strip_tags($Value['description']),0,200,'UTF-8');
+  $Description = (iconv_strlen(strip_tags($Value['description'])) > 100) ? iconv_substr(strip_tags($Value['description']),0,100,'UTF-8').'...' : $Value['description'];
+  //$Description = TextFromDB((strlen($Value['description']) > 50) ? substr($Value['description'],0,500).'...' : $Value['description']);
+  
+  $Other = array();
+  $Query = "
+  SELECT t1.id,t2.lang_system 
+  FROM ".$MYVAR['MYSQL']['PREFIX']."news AS t1 
+  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."lang AS t2 ON t1.lang_id=t2.id 
+  WHERE t1.news_id=".(int)$Value['news_id']." AND t1.lang_id!=".(int)$Value['lang_id']." AND 
+  t1.text!='' AND t1.date!='' AND t1.date!='0000-00-00' AND t1.title!=''
+  ";
+  $Ds1=$SQL->Select($Query);
+   if(!empty($Ds1)){
+    foreach($Ds1 as $Key1 => $Value1)$Other[] = strtoupper($Value1['lang_system']);
+   }
+  
+  echo'
+  <tr>
+  <td class="table-row1">'.$ShowNr.'</td>
+  <td class="table-row1">'.myDate($Value['date']).'</td>
+  <td class="table-row1">'.TextFromDB($Value['title']).'</td>
+  <td class="table-row1">'.$Description.'</td>
+  <td class="table-row1">'.tr('STR_NEWS_ROTATION_'.$Value['rotation']).'</td>
+  <td class="table-row1">'.tr('STR_BLOCK_STATUS_'.$Value['block_status']).'</td>
+  <td class="table-row1">'.implode(',',$Other).'</td>
+  <td class="table-row1 width200">'.myCreateUpdateDate($Value['create_user'],$Value['create_date']).'</td>
+  <td class="table-row3 text-center"><input type="checkbox" name="News_'.$Key.'" value="'.$Value['id'].'"/></td>
+  <td class="table-row1 text-nowrap">'.$EditHref.' '.$DelHref.'</td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  } 
+ 
+ echo'
+ <tr>
+ <td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>tr('BTTN_BLOCK',0),'onclick'=>'actionBlockNews({\'redirect\' : \'?SubId='.$SubId.'&amp;p='.$Pager['page'].'\', \'block_status\' : \'1\'})')).'
+ '.myButton(array('text'=>tr('BTTN_UNBLOCK',0),'onclick'=>'actionBlockNews({\'redirect\' : \'?SubId='.$SubId.'&amp;p='.$Pager['page'].'\', \'block_status\' : \'0\'})')).'
+ </td>
+ </tr>
+ ';
+ }
+echo'
+</table>
+</form>
+';
+?>
+
+<script type="text/javascript" language="javascript" src="/my/scripts/news.js"></script>
+<script type="text/javascript" language="javascript">
+	$(document).ready(function(){
+		$('input[name^="SelectAll_"]').bind('click', function(){actionBindCheck({'source' : 'input[name^="SelectAll_"]', 'target' : 'input[name^="News_"]'});});
+	});
+</script>

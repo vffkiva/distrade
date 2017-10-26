@@ -1,0 +1,23 @@
+<?php
+echo'
+<div id="id-productID" class="hidden-object">'.((isset($_REQUEST['_product'])) ? $_REQUEST['_product'] : '').'</div>
+<div class="main-section-cell">
+ <div class="main-section" id="id-productHtml">
+ 
+ </div>
+ <div class="product-navigation">
+ 
+ <div class="right"></div>
+ <div class="center"><span pid="list" class="link list">'.tr('STR_LIST',0).'</span></div>
+ <div class="left"></div>
+ 
+ </div>
+</div>
+';
+?>
+
+<script type="text/javascript" language="javascript">
+	$(document).ready(function(){
+	actionGetOneProduct({'pid' : $('#id-productID').html()});
+	});
+</script>

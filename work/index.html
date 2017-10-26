@@ -1,0 +1,74 @@
+<?php
+require $_SERVER["DOCUMENT_ROOT"].'/.inc/.inc_functions.html';
+
+
+
+$string = '
+<div>
+	Безупречная репутация ООО &laquo;Дистрейд&raquo;, как поставщика продуктов питания, позволила компании заключить контракты на прямую поставку с ключевыми и требовательными западными клиентами.&nbsp;</div>
+<div>
+	&nbsp; &nbsp;</div>
+<div>
+	&nbsp; &nbsp;Компания собрала молодых и профессиональных специалистов в сфере торговли и дистрибуции, которые работают по всей России, в 5 разных часовых поясах. &nbsp;</div>
+<div>
+	Современные конкурентные условия и стремление к развитию способствовали внедрению инноваций в организации и управлении компании. ООО &laquo;Дистрейд&raquo; в своем активе имеет уникальную систему управления ресурсами и бизнес процессами, что выгодно отличает ее от конкурентов.</div>
+<div>
+	&nbsp;</div>
+<div>
+	<br />
+	<div class="my-element" style="display:inline-block; width:100%; height:20px; border:1px solid rgb(200,200,200);">
+		{&quot;gallery&quot;:&quot;2&quot;}</div>
+</div>
+<div>
+	Безупречная репутация ООО &laquo;Дистрейд&raquo;, как поставщика продуктов питания, позволила компании заключить контракты на прямую поставку с ключевыми и требовательными западными клиентами.&nbsp;</div>
+<div>
+	&nbsp; &nbsp;</div>
+<div>
+	&nbsp; &nbsp;Компания собрала молодых и профессиональных специалистов в сфере торговли и дистрибуции, которые работают по всей России, в 5 разных часовых поясах. &nbsp;</div>
+
+
+	<br />
+	<div class="my-element" style="display:inline-block; width:100%; height:20px; border:1px solid rgb(200,200,200);">
+		{&quot;gallery&quot;:&quot;12&quot;}</div>
+	
+	<div>
+	Современные конкурентные условия и стремление к развитию способствовали внедрению инноваций в организации и управлении компании. ООО &laquo;Дистрейд&raquo; в своем активе имеет уникальную систему управления ресурсами и бизнес процессами, что выгодно отличает ее от конкурентов.</div>
+<div>
+	&nbsp;</div>
+';
+
+
+//$string = strtolower(preg_replace("/\r\n|\n\r|\n|\r/", "",$string));
+//$string = str_replace('&quot;','"',$string);
+
+//$Pattern = '/define\(\'TR[lv|ru|lt|en|_]+(.*?)\'\,/';
+//preg_match_all($Pattern,$Data,$Matches);
+//$pattern = '/<div class="my-element"?.*>(.*)<\/div>/';
+//$pattern = '/<div class="my-element"[^>]*>(.*?)<\/div>/si';	
+//preg_match_all($pattern, $string, $matches);
+
+
+//$pattern = '/<'.$Opts['tag'].' class="'.$Opts['class'].'"[^>]*>(.*?)<\/'.$Opts['tag'].'>/si';	
+
+
+
+$pattern = '/<div class="my-element"[^>]*>(.*?)<\/div>/si';	
+
+//preg_replace($pattern, 'aa<b>$0$1$2$3</b>', $string);
+preg_match_all($pattern, $string, $matches); 
+//echo $string;
+//$a = getTextBetweenTags(array('text' => $string));
+//printr($matches);
+//echo $a;
+
+
+foreach($matches[1] as $Key => $Value){
+
+ $string = str_replace($Value, '<b>'.$Value.'</b>', $string);
+
+}
+
+
+echo $string;
+
+?>

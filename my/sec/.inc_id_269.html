@@ -1,0 +1,126 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$Data = array(
+'banner_id' => (isset($_REQUEST['BannerID'])) ? $_REQUEST['BannerID'] : '',
+'block_status' => '',
+'name' => '',
+'rows' => 10,
+'button' => tr('BTTN_ADD',0)
+);
+
+  for($i=0;$i<$Data['rows'];$i++) foreach($MYVAR['LANGS'] AS $Key => $Lang)$Data['Title_'.$i.'_'.$Key] = $Data['Text_'.$i.'_'.$Key] = '';
+   
+
+ if($Data['banner_id'] != ''){
+ $Data['button'] = tr('BTTN_SAVE',0);
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."banners WHERE id=".(int)$Data['banner_id'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $Data['name'] = TextFromDBForm($Ds[0]['name']);
+  $Data['block_status'] = $Ds[0]['block_status'];
+  }
+
+  for($i=0;$i<$Data['rows'];$i++){
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."banner_details WHERE banner_id=".(int)$Data['banner_id']." AND lang_id=".(int)$Lang['VALUE']." ORDER BY id LIMIT ".$i.", 1";
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+	$Data['Title_'.$i.'_'.$Key] = TextFromDBForm($Ds[0]['title']);
+	$Data['Text_'.$i.'_'.$Key] = TextFromDBForm($Ds[0]['text']);
+	}
+   }
+  }
+ }
+
+// printr($Data);
+
+$Colspan = sizeof($MYVAR['LANGS']) + 1;
+echo'
+<form name="id-formAddBanner" method="post" action="" id="id-formAddBanner">
+<table width="100%" class="table-class1">
+<tr><td class="table-row-header">'.$ShowTitle.'</td></tr>
+<tr><td class="table-row1">'.tr('STR_BANNER_NAME').': <input type="text" name="Name" value="'.$Data['name'].'" class="Design width300"/> *</td>
+</tr>
+<tr>
+<td class="table-row1">
+<ul class="banner">
+';
+ for($i=0;$i<$Data['rows'];$i++){
+ echo '
+ <li id="id-row_'.$i.'"><table><tr><td class="text-center">'.myIcon(array('icon'=>'ui-icon-arrow-4-diag')).'</td> 
+ ';
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ $Name = array('title' =>  'Title_'.$i.'_'.$Key, 'text' => 'Text_'.$i.'_'.$Key);
+  
+  echo'
+  <td class="text-nowrap">
+  '.tr('STR_BANNER_TAB_NAME').' ('.$Lang['lang_short'].')<br/><input type="text" name="'.$Name['title'].'" value="'.$Data[$Name['title']].'" class="Design width300"/><br/><br/>
+  '.tr('STR_BANNER_TEXT').' ('.$Lang['lang_short'].') '.myIcon(array('icon'=>'ui-icon-note','onclick'=>'dialogAddBannerContent({\'field\' : \''.$Name['text'].'\', \'lang_id\' : \''.$Lang['VALUE'].'\'})')).'<br/><textarea name="'.$Name['text'].'" class="Design width300">'.$Data[$Name['text']].'</textarea>
+  </td>
+  ';
+  }
+ echo '</tr></table></li>';
+ }
+echo'
+</ul>
+</td>
+</tr>
+<tr>
+<td class="table-row1">'.tr('STR_BLOCK_STATUS').': 
+<select name="BlockStatus" class="Design">
+<option value=""><!----></option>
+<option value="0"'.CheckSelect('0',$Data['block_status']).'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+<option value="1"'.CheckSelect('1',$Data['block_status']).'>'.tr('STR_BLOCK_STATUS_1',0).'</option>
+</select> *
+</td>
+</tr>
+<tr>
+<td class="table-row-footer" colspan="'.$Colspan.'">
+'.myButton(array('text'=>$Data['button'],'onclick'=>'actionAddBanner({\'redirect\' : \'?SubId=270\', \'banner_id\' : \''.$Data['banner_id'].'\'})')).'
+'.myButton(array('text'=>tr('BTTN_EDITOR_TOOLBAR',0),'onclick'=>'dialogEditorToolbar({})')).'
+</td>
+</tr>
+</table>
+</form>
+
+<script type="text/javascript" src="/my/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="/my/scripts/banners.js"></script>
+';
+?>
+
+<script type="text/javascript" language="javascript"> 
+$(document).ready(function(){
+var data = {}
+	dialogEditorToolbar({'fields' : $('textarea[name^="Text_"]')});
+	$('.banner').sortable({
+	'handle' : '.ui-icon-arrow-4-diag',
+		start: function(event, ui) {
+			$.each($(ui.item).find('textarea'), function (index, item){
+			name = $(this).attr('name');
+			data[name] = '';
+				if(CKEDITOR.instances[name]){
+				data[name] = CKEDITOR.instances[name].getData();
+				CKEDITOR.instances[name].destroy();
+				}
+			});
+
+			},
+		stop: function(event, ui) {
+			$.each($(ui.item).find('textarea'), function (index, item){
+			name = $(this).attr('name');
+				CKEDITOR.replace(name, {
+				resize_enabled : true,
+				enterMode : CKEDITOR.ENTER_BR,
+				shiftEnterMode: CKEDITOR.ENTER_P,
+				width: 300,
+				height: 120,
+				customConfig : '/my/ckeditor/my_config.js',
+				sharedSpaces : {top : 'dialog-editor-toolbar'}
+				}); 
+				CKEDITOR.instances[name].setData(data[name]);
+			});
+		}
+	});
+});
+</script>

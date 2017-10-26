@@ -1,0 +1,121 @@
+<?php
+
+ if($action == 'actionAddNode'){
+ $Data = array(
+ 'node_id' => $_REQUEST['NodeID'],
+ 'sub-action' => $_REQUEST['SubAction'],
+ 'text' => TextToDB($_REQUEST['Text']),
+ 'is_id' => ((isset($_REQUEST['IsID']) && $_REQUEST['IsID'] != '') ? $_REQUEST['IsID'] : ''),
+ 'node_type' => ((isset($_REQUEST['Type']) && $_REQUEST['Type'] != '') ? $_REQUEST['Type'] : ''),
+ 'show_menu' => ((isset($_REQUEST['ShowMenu']) && $_REQUEST['ShowMenu'] != '') ? $_REQUEST['ShowMenu'] : ''),
+ 'show_menu_adm' => ((isset($_REQUEST['ShowMenuAdm']) && $_REQUEST['ShowMenuAdm'] != '') ? $_REQUEST['ShowMenuAdm'] : ''),
+ 'is_permission' => ((isset($_REQUEST['IsPermission']) && $_REQUEST['IsPermission'] != '') ? $_REQUEST['IsPermission'] : ''),
+ 'link_sub_id' => TextToDB($_REQUEST['LinkSubId']),
+ 'is_href' => ((isset($_REQUEST['IsHref']) && $_REQUEST['IsHref'] != '') ? $_REQUEST['IsHref'] : ''),
+ 'onclick' => TextToDB($_REQUEST['onClick']),
+ 'exceptions' => array('node_id','onclick','is_href','link_sub_id')
+ );
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Data['text_'.$Key] = TextToDB($_REQUEST['Text_'.$Key]);
+  $Data['lang_id_'.$Key] = $_REQUEST['LangID_'.$Key];
+  }
+  
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  } 
+  
+  
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  
+  if($Error == ''){
+   if($Data['sub-action'] == 'add'){
+   $Params = array();
+   $Params['section']['display_text'] = $Data['text'];
+   $Params['section']['is_id'] = (int)$Data['is_id'];
+   $Params['section']['is_href'] = $Data['is_href'];
+   $Params['section']['is_permission'] = (int)$Data['is_permission'];
+   $Params['section']['type'] = (int)$Data['node_type'];
+   $Params['section']['perm'] = '1';
+   $Params['section']['show_menu'] = (int)$Data['show_menu'];
+   $Params['section']['show_menu_adm'] = (int)$Data['show_menu_adm'];
+   $Params['section']['link_subid'] = $Data['link_sub_id'];
+   $Params['section']['onclick'] = $Data['onclick'];
+   $dbtree->Insert((int)$Data['node_id'], '', $Params['section']);
+   
+   $Query = "SELECT MAX(section_id) AS node_id FROM ".$MYVAR['MYSQL']['PREFIX']."menu";
+   $Ds=$SQL->Select($Query);
+   $Data['node_id'] = $Ds[0]['node_id'];
+   }
+  
+   if($Data['sub-action'] == 'change'){
+   $Query = "
+   UPDATE ".$MYVAR['MYSQL']['PREFIX']."menu SET display_text='".$Data['text']."',
+   is_id=".(int)$Data['is_id'].",is_href='".$Data['is_href']."',is_permission=".(int)$Data['is_permission'].",type=".(int)$Data['node_type'].",show_menu=".(int)$Data['show_menu'].",show_menu_adm=".(int)$Data['show_menu_adm'].",
+   link_subid='".$Data['link_sub_id']."',onclick='".$Data['onclick']."' WHERE section_id=".(int)$Data['node_id']
+   ;
+   $Ds=$SQL->Update($Query);
+   }
+  
+   for($i=0;$i<sizeof($MYVAR['LANGS']);$i++){
+   $LangID = $Data['lang_id_'.$i];
+   $TextLang = $Data['text_'.$i];
+    if($TextLang !='' ){
+	$Query = "SELECT id FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id='".$Data['node_id']."' AND lang_id='".$LangID."'";
+    $Ds=$SQL->Select($Query);
+     if($Ds){
+     $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."menu_lang SET text='".$TextLang."' WHERE id='".$Ds[0]['id']."'";
+     $Ds=$SQL->Update($Query);
+     }
+     else{
+     $Query = "INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."menu_lang SET menu_id='".$Data['node_id']."',lang_id='".$LangID."',text='".$TextLang."'";
+     $Ds=$SQL->Insert($Query);
+     }
+    }
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+
+ 
+ 
+ if($action == 'actionMoveNode'){
+ $Data = array(
+ 'mode' => $_REQUEST['Mode'],
+ 'node_id' => $_REQUEST['NodeID'],
+ 'node_id_v1' => $_REQUEST['NodeIDv1'],
+ 'node_id_v2' => $_REQUEST['NodeIDv2'],
+ 'position' => $_REQUEST['Position']
+ );
+
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if((($Data['mode'] == 'mode1' && !in_array($Key,array('node_id_v2'))) || ($Data['mode'] == 'mode2' && !in_array($Key, array('node_id_v1','position')))) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+  
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  
+  if($Error == ''){
+   if($Data['mode'] == 'mode1'){
+   $dbtree->ChangePositionAll((int)$Data['node_id'], (int)$Data['node_id_v1'], $Data['position']);
+   }
+
+   if($Data['mode'] == 'mode2'){   
+   $dbtree->MoveAll((int)$Data['node_id'], (int)$Data['node_id_v2']);
+   }
+  
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0)))); 
+  }	
+ 
+ }
+ 
+ ?>

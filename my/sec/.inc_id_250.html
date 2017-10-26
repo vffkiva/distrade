@@ -1,0 +1,97 @@
+<?php
+$ShowTitle = netViewTree($SubId).' ('.tr('STR_LANGUAGE').': '.$MYVAR['LANG_LONG'].')';
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0 ) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 20;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+$Colspan = 8;
+echo'
+<form name="id-formModules" method="post" action="" id="id-formModules">
+<table width="100%" class="table-class1">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr>
+<td class="table-row2 bold">#</td>
+<td class="table-row2 bold">'.tr('STR_TITLE').'</td>
+<td class="table-row2 bold">'.tr('STR_DESCRIPTION').'</td>
+<td class="table-row2 bold">'.tr('STR_BLOCK_STATUS').'</td>
+<td class="table-row2 bold">'.tr('STR_DIFFERENT_LANGUAGES').'</td>
+<td class="table-row2 bold">'.tr('STR_CREATED').'</td>
+<td class="table-row3 text-center"><input type="checkbox" name="SelectAll_1" value="set"/></td>
+<td class="table-row2"><!----></td>
+</tr>
+';
+
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE lang_id='".$MYVAR['LANG_ID']."' ORDER BY create_date DESC";
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+ for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+  
+ if(empty($Ds))echo'<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+  
+  foreach($Ds AS $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  $EditHref = (userPermission('247')) ? myIcon(array('icon'=>'ui-icon-pencil','onclick'=>'window.location=\'?SubId=247&amp;ModuleID='.$Value['module_id'].'\'')) : '';
+  $DelHref = (userPermission('248') && (int)$Value['readonly'] != 1) ? myIcon(array('icon'=>'ui-icon-trash','onclick'=>'actionDeleteModule({\'redirect\' : \'?SubId='.$SubId.'\', \'module_id\' : \''.$Value['id'].'\'})')) : '';   
+
+  $Description = iconv_substr(strip_tags($Value['description']),0,200,'UTF-8');
+
+  $Other = array();
+  $Query = "
+  SELECT t1.id,t2.lang_system 
+  FROM ".$MYVAR['MYSQL']['PREFIX']."modules AS t1 
+  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."lang AS t2 ON t1.lang_id=t2.id 
+  WHERE t1.module_id=".(int)$Value['module_id']." AND t1.lang_id!=".(int)$Value['lang_id']." AND 
+  t1.text!='' ";
+  $Ds1=$SQL->Select($Query);
+   if(!empty($Ds1)){
+    foreach($Ds1 as $Key1 => $Value1)$Other[] = strtoupper($Value1['lang_system']);
+   }
+  echo'
+  <tr>
+  <td class="table-row1">'.$ShowNr.'</td>
+  <td class="table-row1">'.strhtml($Value['title']).'</td>
+  <td class="table-row1">'.$Description.'</td>
+  <td class="table-row1">'.tr('STR_BLOCK_STATUS_'.$Value['block_status']).'</td>
+  <td class="table-row1">'.implode(',',$Other).'</td>
+  <td class="table-row1">'.myCreateUpdateDate($Value['create_user'],$Value['create_date']).'</td>
+  <td class="table-row3 text-center"><input type="checkbox" name="Module_'.$Key.'" value="'.$Value['id'].'"/></td>
+  <td class="table-row1 text-nowrap">'.$EditHref.' '.$DelHref.'</td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  }
+  
+  echo'
+ <tr>
+ <td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>tr('BTTN_BLOCK',0),'onclick'=>'actionBlockModules({\'redirect\' : \'?SubId='.$SubId.'&amp;p='.$Pager['page'].'\', \'block_status\' : \'1\'})')).'
+ '.myButton(array('text'=>tr('BTTN_UNBLOCK',0),'onclick'=>'actionBlockModules({\'redirect\' : \'?SubId='.$SubId.'&amp;p='.$Pager['page'].'\', \'block_status\' : \'0\'})')).'
+ </td>
+ </tr>
+ ';
+ }
+echo'
+</table>
+</form>
+';
+?>
+
+<script type="text/javascript" language="javascript" src="/my/scripts/modules.js"></script>
+<script type="text/javascript" language="javascript">
+	$(document).ready(function(){
+		$('input[name^="SelectAll_"]').bind('click', function(){actionBindCheck({'source' : 'input[name^="SelectAll_"]', 'target' : 'input[name^="Module_"]'});});
+	});
+</script>

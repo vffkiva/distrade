@@ -1,0 +1,106 @@
+<?php
+//-------------------------------------------------------------------------------
+//ACTION: add/update section
+//-------------------------------------------------------------------------------
+ if($action ==  'actionSaveSection'){
+ $Data = array(
+ 'sub_id' => $_REQUEST['SubId'],
+ 'top_slider' => (isset($_REQUEST['TopSlider']) && $_REQUEST['TopSlider'] != '') ? $_REQUEST['TopSlider'] : 'default'
+ );
+ 
+  for($i=0;$i<sizeof($MYVAR['LANGS']);$i++){
+  $Title = TextToDB($_REQUEST['Title_'.$i]);
+  $Text = TextToDB($_REQUEST['SectionText_'.$i]);
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id='".$Data['sub_id']."' AND lang_id='".$MYVAR['LANGS'][$i]['VALUE']."'";
+  $Ds=$SQL->Select($Query);
+   if(empty($Ds)){
+   $Query = "INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."sections SET sub_id='".$Data['sub_id']."',lang_id=".(int)$MYVAR['LANGS'][$i]['VALUE'].",title='".$Title."',";
+   $Query .= "text='".$Text."',top_slider='".$Data['top_slider']."',create_date=NOW(),create_user=".(int)$MYVAR['USER']['ID'];
+   $DsI=$SQL->Insert($Query);
+   }
+   else{
+   $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."sections SET title='".$Title."',";
+   $Query .= "text='".$Text."',top_slider='".$Data['top_slider']."',update_date=NOW(),update_user=".(int)$MYVAR['USER']['ID']." WHERE sub_id='".$Data['sub_id']."' AND lang_id=".(int)$MYVAR['LANGS'][$i]['VALUE'];
+   $DsU=$SQL->Update($Query);
+   }
+  }
+ WriteToSession('message',json_encode(array('type' => 'info', 'mode' => 'prompt', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+ }
+ 
+
+//-------------------------------------------------------------------------------
+//ACTION: save section preview
+//-------------------------------------------------------------------------------
+  if($action == 'actionSaveSectionPreview'){
+  $Data = array(
+  'preview' => TextToDB($_REQUEST['PreviewText']),
+  'lang_id' => $_REQUEST['LangID'],
+  'sub_id' => $_REQUEST['SubId']
+  );
+  
+  $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."sections SET preview_text='".$Data['preview']."' WHERE lang_id=".(int)$Data['lang_id']." AND sub_id=".(int)$Data['sub_id'];
+  $Ds=$SQL->Update($Query);
+  $Out['message'] = array('type' => 'info', 'mode' => 'prompt', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0));
+  } 
+
+
+//-------------------------------------------------------------------------------
+//ACTION: save title configuration
+//-------------------------------------------------------------------------------
+ if($action == 'actionSaveTitleConfiguration'){
+ $Data = array(
+ 'set_to_all' => $_REQUEST['SetToAll'],
+ 'lang_id' => $_REQUEST['LangID'],
+ 'object_id' => $_REQUEST['object_id'],
+ 'style' => (isset($_REQUEST['Style']) && $_REQUEST['Style']!='') ? $_REQUEST['Style'] : '',
+ 'type' => $_REQUEST['Type']
+ );
+
+ if($Data['type'] == 'section'){
+  if((int)$Data['set_to_all'] == 1)$Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."menu_lang SET title_style='".$Data['style']."'";
+  else $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."menu_lang SET title_style='".$Data['style']."' WHERE menu_id=".(int)$Data['object_id']." AND lang_id=".(int)$Data['lang_id'];
+ }
+ $Ds=$SQL->Update($Query);
+ $Out['message'] = array('type' => 'info', 'mode' => 'prompt', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0));
+ }
+
+//-------------------------------------------------------------------------------
+//ACTION: save layout configuration
+//-------------------------------------------------------------------------------
+ if($action == 'actionSaveLayout'){
+ $Data = array(
+ 'data' => json_decode($_REQUEST['data'],true),
+ 'modules' => array(),
+ 'position_center' => false
+ );
+ 
+  if(empty($Data['data']))$Error = tr('MSG_ERROR_NO_MODULES_SELECTED',0);
+  
+  if($Error == ''){
+   foreach($Data['data'] as $Key => $Value){
+    $Params = array_merge(array('module_type' => '', 'module_id' => ''),json_decode($Value['params'],true));
+	if(($Params['module_type'] == 'news' || $Params['module_type'] == 'module' || $Params['module_type'] == 'section' || $Params['module_type'] == 'banner') && (int)$Params['module_id'] == 0)$Error = tr('MSG_ERROR_NO_SETTINGS_FOR_BLOCK_DEFINED',0);
+	else {
+	$Data['modules'][] = $Value;
+	}
+    if($Value['position'] == 'center')$Data['position_center'] = true;
+   }
+  }  
+  
+  if($Error == '' && !$Data['position_center'])$Error = tr('MSG_ERROR_LAYOUT_NO_CENTER_BLOCKS_SELECTED',0);
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  if($Error == ''){
+  
+  $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE lang_id=".(int)$MYVAR['LANG_ID'];
+  $Ds=$SQL->Delete($Query);
+   foreach($Data['modules'] as $Key => $Value){
+   $Query = "
+   INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."layout SET lang_id=".(int)$MYVAR['LANG_ID'].", position='".strtoupper($Value['position'])."',nr=".(int)$Value['nr'].",
+   module_params='".TextToDB($Value['params'])."',module_text='".TextToDB(strip_tags($Value['text']))."'
+   ";
+   $Ds=$SQL->Insert($Query);
+   }
+  $Out['message'] = array('type' => 'info', 'mode' => 'prompt', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0));
+  }
+ } 
+?>

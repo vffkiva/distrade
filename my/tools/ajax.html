@@ -1,0 +1,220 @@
+<?php
+require $_SERVER["DOCUMENT_ROOT"].'/my/.inc/.inc_functions.html';
+
+$Error = '';
+$tmpOut = '';
+
+$Out = array(
+	'error' => '',
+	'error_fields' => array(),
+	'request' => $_REQUEST,
+	'sub_id' => ((isset($_REQUEST['SubId']) && $_REQUEST['SubId'] != '') ? $_REQUEST['SubId'] : ''),
+	'dialog' => array(
+		'title' => tr('STR_DIALOG_TITLE',0), 
+		'text' => tr('STR_DIALOG_TEXT')
+		),
+	'message' => array(
+		'type' => 'info',
+		'text' => '',
+		'mode' => 'prompt',
+		'text_plain' => '',
+		'title'
+		),
+	'html' => '',
+	'redirect' => ((isset($_REQUEST['redirect']) && $_REQUEST['redirect'] != '') ? $_REQUEST['redirect'] : '')
+);
+
+
+ if(isset($_REQUEST['action']) && $_REQUEST['action'] != ''){
+ $action = $_REQUEST['action'];
+
+  if(in_array($action, array('viewVar','saveVar'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/translation.html';
+  }
+ 
+  if(in_array($action, array('login', 'logout'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/authorization.html';
+  }
+
+  if(in_array($action, array('dialogAddUser', 'dialogPasswordReset', 'dialogViewUser', 'dialogAddUserType', 'dialogViewUserOnlineParams', 'dialogAddLanguage', 'dialogAddPictureComment', 'dialogPreviewSection', 'dialogImport', 'dialogBrowseForFile'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs.html';
+  }
+
+  if(in_array($action, array('dialogAddNode', 'dialogMoveNode'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs_menu.html';
+  } 
+
+  if(in_array($action, array('dialogAddClient', 'dialogViewClient'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs_clients.html';
+  }
+
+  if(in_array($action, array('dialogAddProduct', 'dialogViewProduct', 'dialogAddManufacturer'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs_products.html';
+  }
+  
+  if(in_array($action, array('dialogPreviewSection', 'dialogTitleConfiguration', 'dialogLayoutObjectSettings', 'dialogAddMyElement'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs_sections.html';
+  }
+
+  if(in_array($action, array('dialogAddBannerContent'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs_banners.html';
+  }
+  
+  if(in_array($action, array('dialogShowFilter'))){
+  $Data = array(
+  'key' => $_REQUEST['key'],
+  'fields' => array(),
+  'users' => Table2Arr("SELECT id, CONCAT(name,' (',username,')') AS name, block_status FROM ".$MYVAR['MYSQL']['PREFIX']."users_list ORDER BY name",'name','id','block_status')
+  );
+    
+   if($Data['key'] != '' && isset($_SESSION['search']) && isset($_SESSION['search'][$Data['key']]) && !empty($_SESSION['search'][$Data['key']])){
+   $Fields = json_decode($_SESSION['search'][$Data['key']]['fields'], true);
+   $Values = json_decode($_SESSION['search'][$Data['key']]['values'], true);
+    foreach($Fields AS $Key => $Field) $Data['fields'][$Field] = strhtml($Values[$Key]);
+   }
+  
+  $tmpOut = '
+  <form name="ActionForm" action="" method="post">
+  <table class="table-class1 width100p">
+  ';
+   if((int)$Data['key'] != 0){
+   require_once $MYVAR['ROOT'].'tools/filter/sec_'.(string)$Data['key'].'.html';
+   }
+   
+  $tmpOut .= '
+  <tr>
+  <td colspan="5">'.tr('INFO_SPECIAL_SYMBOLS').'</td>
+  </tr>
+  </table>
+  </form>
+  ';
+  $Out['dialog']['text'] = $tmpOut;
+  } 
+
+
+//-----------------------------------------------------------------------------------
+//ACTION: apply filter
+//-----------------------------------------------------------------------------------  
+  if($action == 'actionApplyFilter'){ 
+  $Data = array(
+  'key' => $_REQUEST['key']
+  );
+  
+  $Fields = array();
+  $Values = array();
+   foreach ($_REQUEST AS $Key => $Value) {
+    if($Value!='' && !in_array($Key, array('action', 'redirect', 'key'))){
+    $Fields[] = $Key;
+    $Values[] = TextToDB($Value);
+    }
+   }
+   if(sizeof($Fields) > 0){
+    if(!isset($_SESSION['search']))$_SESSION['search'] = array();
+	if(!isset($_SESSION['search'][$Data['key']]))$_SESSION['search'][$Data['key']] = array();
+    $_SESSION['search'][$Data['key']] = array('fields' => json_encode($Fields), 'values' => json_encode($Values));
+   }
+  }
+
+  
+//-----------------------------------------------------------------------------------
+//ACTION: reset filter
+//-----------------------------------------------------------------------------------  
+  if($action == 'actionResetFilter'){
+  $Data = array(
+  'key' => $_REQUEST['key']
+  );
+  
+   if(isset($_SESSION['search']) && isset($_SESSION['search'][$Data['key']])){
+   unset($_SESSION['search'][$Data['key']]);
+    if(empty($_SESSION['search']))unset($_SESSION['search']);
+   }
+  }
+  
+  
+  if(in_array($action, array('actionAddUser', 'actionDeleteUser', 'actionPasswordReset', 'actionAddUserType', 'actionDeleteUserType', 'actionSavePermissions', 'actionAddLanguage', 'actionGetLanguages', 'actionGetSections', 'actionGetTags'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions.html';
+  }
+
+  if(in_array($action, array('actionAddNode', 'actionMoveNode'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_menu.html';
+  }
+ 
+  if(in_array($action, array('actionAddClient'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_clients.html';
+  }
+
+  if(in_array($action, array('actionAddProduct', 'actionAddManufacturer', 'actionDeleteProduct'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_products.html';
+  }
+
+  if(in_array($action, array('actionAddNews', 'actionBlockNews', 'actionDeleteNews'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_news.html';
+  }
+
+  if(in_array($action, array('actionAddModule', 'actionBlockModules', 'actionDeleteModule'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_modules.html';
+  }
+
+  if(in_array($action, array('actionSaveGallery', 'actionBlockGalleries', 'actionDeleteGallery'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_galleries.html';
+  }
+
+  if(in_array($action, array('actionSaveSection', 'actionSaveSectionPreview', 'actionSaveTitleConfiguration', 'actionSaveLayout'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_sections.html';
+  }
+
+  if(in_array($action, array('actionSelectBannerContent', 'actionAddBanner', 'actionBlockBanner', 'actionDeleteBanner'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions_banners.html';
+  }  
+//-----------------------------------------------------------------------------------
+//ACTION: change language
+//-----------------------------------------------------------------------------------  
+  if($action == 'actionChangeLanguage'){ 
+   $Data = array(
+   'lang' => ((isset($_REQUEST['lang'])) ? $_REQUEST['lang'] : ''),
+   'redirect' => ((isset($_REQUEST['redirect'])) ? $_REQUEST['redirect'] : '')
+   );
+  
+   if($Data['lang'] != ''){
+    $Query = "SELECT id FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE lang_system LIKE '".$Data['lang']."' AND block_status=0";
+	$Ds=$SQL->Select($Query);
+	 if(!empty($Ds)){
+	 WriteToSession('Lang',$Data['lang']);
+	 $Out['redirect'] = $_SERVER['HTTP_REFERER'];
+	 }
+   }
+  }
+ }
+
+
+
+ if($Out['message']['text'] != ''){
+  if($Out['message']['type'] == 'info') {
+  $Title = tr('TITLE_INFO',0);
+  $Icon = 'ui-icon-info';
+  $State = 'ui-state-highlight';
+  }
+  if($Out['message']['type'] == 'error') {
+  $Title = tr('TITLE_ERROR',0);
+  $Icon = 'ui-icon-alert';
+  $State = 'ui-state-error';
+ 
+   if(!empty($Out['error_fields'])){
+   $Tmp = '';
+    foreach($Out['error_fields'] as $Key => $Value)$Tmp .= '- '.tr('ERROR_FIELD_'.strtoupper($Value),0).'<br/>';
+    $Out['message']['text'] .= '<br/>'.$Tmp;
+   }
+  } 
+ $Out['message']['title'] = $Title;
+ $Out['message']['text_plain'] = $Out['message']['text'];
+ $Out['message']['text'] =  '
+  <div class="'.$State.' ui-corner-all" style="width:99%;float:left;">
+   <div style="width:30px;height:100%;min-height:100px;float:left;text-align:center; padding:5px 0 0 10px;"><span class="ui-icon '.$Icon.'"><!----></span></div>
+   <div style="width:auto;height:100%;min-height:100px;padding-top:5px;">'.$Out['message']['text'].'</div>
+ </div>
+ ';
+ }
+ 
+header('Content-type: application/json');
+echo json_encode($Out);
+?>

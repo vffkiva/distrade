@@ -1,0 +1,29 @@
+<?php
+$Data['fields'] = array(
+'user_id' => (isset($Data['fields']['user_id'])) ? $Data['fields']['user_id'] : '',
+'is_ajax' => (isset($Data['fields']['is_ajax'])) ? $Data['fields']['is_ajax'] : ''
+);
+
+$tmpOut .= '
+<tr>
+<td>'.tr('STR_USER').'</td><td><select name="user_id" class="Design"><option value="">'.tr('STR_ANY_MALE',0).'</option>
+';
+ foreach($Data['users'] AS $Key => $Value){
+ $Text = ((int)$Value['block_status'] == 1) ? $Value['TEXT'].' ('.tr('STR_BLOCK_STATUS_'.$Value['block_status'],0).')' : $Value['TEXT'];
+ $tmpOut .= '<option value="'.$Value['VALUE'].'"'.CheckSelect($Data['fields']['user_id'],$Value['VALUE']).'>'.$Text.'</option>';
+ }
+$tmpOut .= '
+</select>
+</td>
+</tr>
+<tr>
+<td>'.tr('STR_HTTP_REQUEST_TYPE').'</td>
+<td><select name="is_ajax" class="Design">
+<option value="">'.tr('STR_ANY_MALE',0).'</option>
+<option value="1"'.CheckSelect($Data['fields']['is_ajax'],1).'>ajax</option>
+<option value="0"'.CheckSelect($Data['fields']['is_ajax'],0).'>http</option>
+</select>
+</td>
+</tr>
+';
+?>

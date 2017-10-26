@@ -1,0 +1,398 @@
+<?php
+
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update user
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddUser'){
+ $Data = array(
+ 'user_id' => ((isset($_REQUEST['user_id']) && $SQL->GetSQLData($_REQUEST['user_id'],'id',$MYVAR['MYSQL']['PREFIX'].'users_list','id') != '') ? $_REQUEST['user_id'] : ''),
+ 'name' => '',
+ 'username' => '',
+ 'old_username' => '',
+ 'password1' => '',
+ 'password2' => '',
+ 'email' => '',
+ 'old_email' => '',
+ 'block_status' => '',
+ 'notes' => '',
+ 'type_id' => '',
+ 'start_sub_id' => '',
+ 'user_types' => array(),
+ 'dialog_title' => tr('TITLE_ADD_USER',0),
+ 'menu' => array()
+ );
+ $Data['user_types'] = Table2Arr("SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_types ORDER BY type",'type','id');
+  
+  if($Data['user_id'] != ''){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_list WHERE id=".(int)$Data['user_id'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+   $Data['name'] = TextFromDBForm($Ds[0]['name']);
+   $Data['username'] = $Data['old_username'] = $Ds[0]['username'];
+   $Data['email'] = $Data['old_email'] = $Ds[0]['e_mail'];
+   $Data['type_id'] = $Ds[0]['type_id'];
+   $Data['start_sub_id'] = $Ds[0]['start_subid'];
+   $Data['block_status'] = (int)$Ds[0]['block_status'];
+   $Data['notes'] = TextFromDBForm($Ds[0]['notes']);
+   $Data['dialog_title'] = $Ds[0]['name'];
+   }
+  }
+
+   
+ $tmpOut = '
+ <form name="ActionForm" method="post" id="ActionForm">
+ <table class="width100p">
+ <tr>
+ <td>'.tr('STR_NAME').'</td>
+ <td><input type="text" name="Name" value="'.$Data['name'].'" class="Design width200" /> *</td>
+ </tr>
+  <tr>
+  <td>'.tr('STR_USERNAME').'</td>
+  <td><input type="text" name="Username" value="'.$Data['username'].'" class="Design" /> *</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_USER_TYPE').'</td>  
+  <td>
+  <select name="TypeID" class="Design">
+  <option value=""><!----></option>
+  ';
+   foreach($Data['user_types'] AS $Key => $Value)$tmpOut .= '<option value="'.$Value['VALUE'].'"'.CheckSelect($Data['type_id'],$Value['VALUE']).'>'.TextFromDBForm($Value['TEXT']).'</option>';
+  $tmpOut .= '
+  </select> *
+  </td>
+  </tr>
+  '.(($Data['user_id'] == '') ? '
+  
+  <tr>
+  <td>'.tr('STR_PASSWORD').'</td>
+  <td><input type="password" name="Password1" class="Design" value="'.$Data['password1'].'"/> *</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_PASSWORD_REPETITIVE').'</td>
+  <td><input type="password" name="Password2" value="'.$Data['password2'].'" class="Design"/> *</td>
+  </tr>
+  ' : '')
+  .'
+  <tr>
+  <td>'.tr('STR_EMAIL').'</td>
+  <td><input type="text" name="Email" value="'.$Data['email'].'" maxlength="64" class="Design width200"/> *</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_START_SUBID').'</td>
+  <td id="id-tdStartSubId"></td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_BLOCK_STATUS').'</td>
+  <td>
+  <select name="BlockStatus" class="Design">
+  <option value=""'.CheckSelect('',$Data['block_status']).'><!----></option>
+  <option value="0"'.CheckSelect(0,$Data['block_status']).'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+  <option value="1"'.CheckSelect(1,$Data['block_status']).'>'.tr('STR_BLOCK_STATUS_1',1).'</option>
+  </select> *
+  </td>
+  </tr>
+  <tr>
+  <td class="text-top">'.tr('STR_NOTES').'</td>
+  <td><textarea class="Design standard" name="Notes" style="overflow:hidden">'.$Data['notes'].'</textarea></td>
+  </tr>
+  </table>
+  <input type="hidden" name="UserID" value="'.$Data['user_id'].'">
+  <input type="hidden" name="OldUsername" value="'.$Data['old_username'].'">
+  <input type="hidden" name="OldEmail" value="'.$Data['old_email'].'">
+  </form> 
+  ';
+
+
+  if(empty($Data['user_types'])) $Out['message'] = array('type' => 'error', 'text' => tr('MSG_ERROR_NO_USER_TYPES'));
+  else $Out['dialog']['text'] = $tmpOut;  
+  $Out['dialog']['title'] = $Data['dialog_title'];
+ }
+ 
+//-----------------------------------------------------------------------------------
+//DIALOG: password reset
+//----------------------------------------------------------------------------------- 
+  if($action == 'dialogPasswordReset'){
+  $Data = array(
+  'user_id' => $_REQUEST['UserID']
+  );
+   
+  $tmpOut = '
+  <form name="ActionForm" method="post" id="ActionForm">
+  <table class="width100p">
+  <tr>
+  <td>'.tr('STR_PASSWORD').'</td>
+  <td><input type="password" name="Password1" value="" maxlength="32" class="Design" />*</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_PASSWORD_REPETITIVE').'</td>
+  <td>
+  <input type="password" name="Password2" value="" maxlength="32" class="Design" />*
+  <input type="hidden" name="UserID" value="'.$Data['user_id'].'">
+  </td>
+  </tr>
+  </table>
+  </form>
+  ';
+  $Out['dialog']['text'] = $tmpOut;
+  }
+ 
+//-----------------------------------------------------------------------------------
+//DIALOG: View user
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogViewUser'){
+ $Data = array(
+ 'user_id' => (isset($_REQUEST['UserID']) && $SQL->GetSQLData($_REQUEST['UserID'],'id',$MYVAR['MYSQL']['PREFIX'].'users_list','id') != '') ? $_REQUEST['UserID'] : ''
+ );
+
+  $Query = "
+  SELECT t1.*,t2.type FROM ".$MYVAR['MYSQL']['PREFIX']."users_list AS t1 
+  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."users_types AS t2 ON t1.type_id=t2.id 
+  WHERE t1.id=".(int)$Data['user_id']
+  ;
+  $Ds=$SQL->Select($Query);
+  
+  $tmpOut = '
+  <table class="table-class1 width100p">
+  <tr><td class="bold">'.tr('STR_USER_ID').'</td><td>'.$Ds[0]['id'].'</td></tr>
+  <tr><td class="bold">'.tr('STR_NAME').'</td><td>'.$Ds[0]['name'].'</td></tr>
+  <tr><td class="bold">'.tr('STR_USERNAME').'</td><td>'.$Ds[0]['username'].'</td></tr>
+  <tr><td class="bold">'.tr('STR_USER_TYPE').'</td><td>'.$Ds[0]['type'].'</td></tr>
+  <tr><td class="bold">'.tr('STR_EMAIL').'</td><td>'.$Ds[0]['e_mail'].'</td></tr>
+  <tr><td class="bold">'.tr('STR_BLOCK_STATUS').'</td><td>'.tr('STR_BLOCK_STATUS_'.$Ds[0]['block_status']).'</td></tr>
+  <tr><td class="bold text-top">'.tr('STR_NOTES').'</td><td class="height50">'.$Ds[0]['notes'].'</td></tr>
+  <tr><td class="bold">'.tr('STR_CREATE').'</td><td>'.myCreateUpdateDate($Ds[0]['create_user'],$Ds[0]['create_date']).'</td></tr>
+  <tr><td class="bold">'.tr('STR_UPDATE').'</td><td>'.myCreateUpdateDate($Ds[0]['update_user'],$Ds[0]['update_date']).'</td></tr>
+  </table>
+  ';
+  $Out['dialog']['text'] = $tmpOut;
+  $Out['dialog']['title'] = TextFromDB($Ds[0]['name']);
+  }  
+  
+  
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update user  type
+//----------------------------------------------------------------------------------- 
+  if($action == 'dialogAddUserType'){
+  $Data = array(
+  'type_id' => $_REQUEST['TypeID'],
+  'type' => '',
+  'old_type' => '',
+  'readonly' => '',
+  'start_sub_id' => '',
+  'block_status' => '',
+  'notes' => '',
+  'dialog_title' => tr('TITLE_ADD_USER_TYPE', 0)
+  );
+   
+   if($Data['type_id'] != 0){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_types WHERE id=".$Data['type_id'];
+   $Ds=$SQL->Select($Query);
+   $Data['type'] = $Data['old_type'] = TextFromDBForm($Ds[0]['type']);
+   $Data['block_status'] = $Ds[0]['block_status'];
+   $Data['notes'] = TextFromDBForm($Ds[0]['notes']);
+   $Data['start_sub_id'] = $Ds[0]['start_subid'];
+   $Data['readonly'] = ($Data['type'] == 'admin')?' readOnly':'';
+   $Data['dialog_title'] = $Ds[0]['type'];
+   }   
+   
+  
+  $tmpOut = '
+  <form name="ActionForm" action="" method="post">
+  <input type="hidden" name="TypeID" value="'.$Data['type_id'].'"/>
+  <input type="hidden" name="OldType" value="'.$Data['old_type'].'"/>
+  <table class="table-class1 width100p">
+  <tr>
+  <td>'.tr('STR_USER_TYPE').'</td><td><input type="text" name="Type" class="Design" maxlength="16" value="'.$Data['type'].'"'.$Data['readonly'].'/> *</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_START_SUBID').'</td>
+  <td id="id-tdStartSubId"></td>
+  </tr>
+  <tr><td>'.tr('STR_BLOCK_STATUS').'</td><td>
+  <select name="BlockStatus" class="Design">
+  <option value=""><!----></option>
+  <option value="0"'.CheckSelect($Data['block_status'],'0').'>'.tr('STR_BLOCK_STATUS_0',0).'</option>
+  <option value="1"'.CheckSelect($Data['block_status'],'1').'>'.tr('STR_BLOCK_STATUS_1',1).'</option>
+  </select> *
+  </td>
+  </tr>
+  <tr><td valign="top">'.tr('STR_NOTES').'</td><td><textarea class="Design standard" name="Notes">'.$Data['notes'].'</textarea></td></tr>
+  </table></form>
+  ';
+  $Out['dialog']['text'] = $tmpOut;
+  $Out['dialog']['title'] = $Data['dialog_title'];
+  }
+
+  
+//-----------------------------------------------------------------------------------
+//DIALOG: user online parameters
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogViewUserOnlineParams'){
+ $Data = array(
+ 'log_id' => $_REQUEST['LogID'],
+ 'get' => '',
+ 'post' => ''
+ );
+ 
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."log_online WHERE id=".(int)$Data['log_id'];
+ $Ds=$SQL->Select($Query);	
+  if(!empty($Ds)){
+  $Data['get'] = explode('&',$Ds[0]['_get']);
+  $Data['post'] = explode('&',$Ds[0]['_post']);
+
+  $tmpOut = '
+  <table class="table-class1 width100p">
+  <tr><td class="bold">GET</td><td class="bold">POST</td></tr>
+  <tr><td>'.str_replace('&','<br/>',$Ds[0]['_get']).'</td><td>'.str_replace('&','<br/>',$Ds[0]['_post']).'</td></tr>
+  </table>
+  ';
+  }
+ $Out['dialog']['text'] = $tmpOut;
+ }  
+  
+
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update language
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddLanguage'){
+  $Data = array(
+  'lang_id' => ((isset($_REQUEST['lang_id']) && $SQL->GetSQLData($_REQUEST['lang_id'],'id',$MYVAR['MYSQL']['PREFIX'].'lang','id') != '') ? $_REQUEST['lang_id'] : ''),
+  'lang_system' => '',
+  'lang_system_old' => '',
+  'lang_short' => '',
+  'lang_long' => '',
+  'block_status' => '',
+  'notes' => '',
+  'dialog_title' => tr('TITLE_ADD_LANGUAGE',0),
+  'exceptions' => array('lang_id','lang_long','notes','dialog_title')
+  );
+
+   if($Data['lang_id'] != ''){
+   $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE id=".(int)$Data['lang_id'];
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+    $Data['lang_system'] = $Data['lang_system_old'] = TextFromDBForm($Ds[0]['lang_system']);
+    $Data['lang_short'] = TextFromDBForm($Ds[0]['lang_short']);
+	$Data['lang_long'] = TextFromDBForm($Ds[0]['lang_long']);
+    $Data['block_status'] = (int)$Ds[0]['block_status'];
+	$Data['notes'] = TextFromDBForm($Ds[0]['notes']);
+    $Data['dialog_title'] = TextFromDB($Ds[0]['lang_short']);
+	}
+   }
+  
+ $tmpOut = '  
+ <form name="ActionForm" action="" method="post">
+ <table class="table-class1 width100p">
+ <tr>
+ <td>'.tr('STR_LANG_SYSTEM').'</td>
+ <td><input type="text" name="LangSystem" class="Design width50" maxlength="2" value="'.$Data['lang_system'].'"/> *</td>
+ </tr>
+ <tr>
+ <td>'.tr('STR_LANG_SHORT').'</td>
+ <td><input type="text" name="LangShort" class="Design width50" maxlength="3" value="'.$Data['lang_short'].'"/> *</td>
+ </tr>
+ <tr>
+ <td>'.tr('STR_LANG_LONG').'</td>
+ <td><input type="text" name="LangLong" class="Design width100" value="'.$Data['lang_long'].'"/></td>
+ </tr>
+ <tr>
+ <td>'.tr('STR_BLOCK_STATUS').'</td>
+ <td>
+ <select name="BlockStatus" class="Design">
+ <option value=""><!----></option>
+ <option value="0"'.CheckSelect($Data['block_status'],'0').'>'.tr('STR_BLOCK_STATUS_0',0).'</option> 
+ <option value="1"'.CheckSelect($Data['block_status'],'1').'>'.tr('STR_BLOCK_STATUS_1',1).'</option>
+ </select> *
+ </td>
+ </tr>
+ <tr>
+ <td class="text-top">'.tr('STR_NOTES').'</td>
+ <td><textarea class="standard" name="Notes">'.$Data['notes'].'</textarea></td>
+ </tr>
+ </table>
+ <input type="hidden" value="'.$Data['lang_id'].'" name="LangID">
+ <input type="hidden" value="'.$Data['lang_system_old'].'" name="LangSystemOld">
+ </form>
+  ';
+
+ $Out['dialog']['text'] = $tmpOut;  
+ $Out['dialog']['title'] = $Data['dialog_title'];
+ }
+ 
+
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update picture comment
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddPictureComment'){
+ $Data = array(
+ 'picture_id' => (isset($_REQUEST['PictureID']))?$_REQUEST['PictureID']:'',
+ 'data' => array()
+ );
+  
+ $tmpOut = '<table><tr>';
+  foreach($MYVAR['LANGS'] as $Key => $Lang){
+  $Data['data'][$Lang['VALUE']] = array('title' => '','text' => '');
+   if($Data['picture_id'] != ''){
+   $Query = "SELECT title, text FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id=".(int)$Data['picture_id']." AND lang_id=".(int)$Lang['VALUE'];
+   $Ds=$SQL->Select($Query);
+    if(!empty($Ds))	$Data['data'][$Lang['VALUE']] = array('title' => TextFromDBForm($Ds[0]['title']),'text' => TextFromDBForm($Ds[0]['text']));
+   }
+  $tmpOut .= '
+  <td>'.tr('STR_TEXT').' ('.$Lang['lang_long'].')</td>
+  ';
+  }
+  $tmpOut .= '</tr><tr>';
+  foreach($MYVAR['LANGS'] as $Key => $Lang){
+  $tmpOut .= '<td>'.tr('STR_TITLE').'<br/><input type="text" class="width250" name="FormTitle_'.$Key.'" value="'.$Data['data'][$Lang['VALUE']]['title'].'"/></td>';
+  }
+  $tmpOut .= '</tr><tr>';
+  foreach($MYVAR['LANGS'] as $Key => $Lang){
+  $tmpOut .= '<td>'.tr('STR_TEXT').'<br/><textarea class="height100 width250" name="FormText_'.$Key.'">'.$Data['data'][$Lang['VALUE']]['text'].'</textarea><input type="hidden" name="FormLang_'.$Key.'" value="'.$Lang['VALUE'].'"/></td>
+  ';
+  }
+  $tmpOut .= '</tr></table>';
+  $Out['dialog']['text'] = $tmpOut;
+  $Out['dialog']['title'] = tr('STR_IMAGE_TEXTS',0);
+  }
+  
+
+//-----------------------------------------------------------------------------------
+//DIALOG: import
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogImport'){
+ $Data = array(  
+ 'filter_key' => (isset($_REQUEST['filter_key']) && $_REQUEST['filter_key'] != '') ? $_REQUEST['filter_key'] : '',
+ 'item' => (isset($_REQUEST['item']) && $_REQUEST['item'] != '') ? $_REQUEST['item'] : '',
+ 'formats' => array('xml'),
+ 'dialog_title' => tr('STR_TITLE_IMPORT',0)
+ );
+ 
+ $tmpOut = '
+ <form name="ActionForm" action="" method="post">
+ <table class="table-class1 width100p">
+ <tr>
+ <td>'.tr('STR_SELECT_FILE_TO_IMPORT').'</td>
+ <td><div id="id-import-file" class="align-left"></div>'.myIcon(array('icon'=>'ui-icon-folder-open','onclick'=>'dialogAttachFile({\'event\' : event, \'upload_dir\' : \''.$MYVAR['ROOT'].'temp/\'})')).'</td>
+ </tr>
+ </table>
+ </form>
+ ';
+ 
+ $Out['dialog']['text'] = $tmpOut;  
+ $Out['dialog']['title'] = $Data['dialog_title'];
+ }
+
+
+//-----------------------------------------------------------------------------------
+//DIALOG: browse for file
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogBrowseForFile'){
+ $tmpOut = '
+ <div id="file-uploader">
+ <noscript><p>Please enable JavaScript to use file uploader.</p><!-- or put a simple form for upload here --></noscript>
+ </div>
+ ';
+
+ $Out['dialog']['text'] = $tmpOut;
+ }
+?>

@@ -1,0 +1,376 @@
+<?php
+
+//-----------------------------------------------------------------------------------
+//ACTION: add system user
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionAddUser'){
+ $Data = array( 
+ 'user_id' => $_REQUEST['UserID'],
+ 'name' => TextToDB($_REQUEST['Name']),
+ 'username' => TextToDB($_REQUEST['Username']),
+ 'type_id' => $_REQUEST['TypeID'],
+ 'old_username' => $_REQUEST['OldUsername'],
+ 'password1' => (isset($_REQUEST['Password1'])) ? $_REQUEST['Password1'] : '',
+ 'password2' => (isset($_REQUEST['Password2'])) ? $_REQUEST['Password2'] : '',
+ 'start_subid' => (isset($_REQUEST['StartSubId']) && (int)$_REQUEST['StartSubId'] != 0) ? (int)$_REQUEST['StartSubId'] : 'NULL',
+ 'email' => $_REQUEST['Email'],
+ 'old_email' => $_REQUEST['OldEmail'],
+ 'block_status' => $_REQUEST['BlockStatus'],
+ 'notes' => TextToDB($_REQUEST['Notes']),
+ 'exceptions' => array('exceptions','user_id','old_username','notes','redirect','start_subid','old_email')
+ );
+
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(($Data['user_id'] == '' && !in_array($Key,$Data['exceptions']) && $Value == '') || ($Data['user_id'] != '' && !in_array($Key,$Data['exceptions']) && $Value == '' && !in_array($Key,array('password1','password2')))){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+ 
+  if($Error == '' &&
+  ($SQL->GetSQLData($Data['username'],'username',$MYVAR['MYSQL']['PREFIX'].'users_list','username') != '' && $Data['old_username'] == '') || 
+  ($SQL->GetSQLData($Data['username'],'username',$MYVAR['MYSQL']['PREFIX'].'users_list','username') != '' && $Data['old_username'] != '' && $Data['old_username'] != $Data['username'])
+  )$Error = tr('MSG_ERROR_USERNAME_IS_ALREADY_IN_USE');
+
+  if($Error == '' &&
+  ($SQL->GetSQLData($Data['email'],'e_mail',$MYVAR['MYSQL']['PREFIX'].'users_list','e_mail') != '' && $Data['old_email'] == '') || 
+  ($SQL->GetSQLData($Data['email'],'e_mail',$MYVAR['MYSQL']['PREFIX'].'users_list','e_mail') != '' && $Data['old_email'] != '' && $Data['old_email'] != $Data['email'])
+  )$Error = tr('MSG_ERROR_EMAIL_IS_ALREADY_IN_USE');
+  
+  if($Error == '' && $Data['user_id'] == '' && $Data['password1'] != $Data['password2'])$Error = tr('MSG_ERROR_PASSWORDS_NOT_MATCH');
+  
+  if($Error == '' && !actionCheckFormat(array('format' => 'login', 'text' => $Data['username'])))$Error = tr('MSG_ERROR_ILLEGAL_FORMAT_LOGIN');
+  
+  if($Error == '' && !actionCheckFormat(array('format' => 'email', 'text' => $Data['email'])))$Error = tr('MSG_ERROR_ILLEGAL_FORMAT_EMAIL');
+   
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else {
+   if($Data['user_id'] == ''){
+   $Query = "
+   INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."users_list SET name='".$Data['name']."',username='".$Data['username']."',password='".md5($Data['password1'])."',e_mail='".$Data['email']."',
+   block_status=".(int)$Data['block_status'].",type_id=".(int)$Data['type_id'].",start_subid=".$Data['start_subid'].",notes='".$Data['notes']."',create_user=".(int)$MYVAR['USER']['ID'].",create_date=NOW()
+   ";
+   $Ds=$SQL->Insert($Query);
+   }
+   else {
+   $Query = "
+   UPDATE ".$MYVAR['MYSQL']['PREFIX']."users_list SET name='".$Data['name']."',username='".$Data['username']."',e_mail='".$Data['email']."',
+   block_status=".(int)$Data['block_status'].",type_id=".(int)$Data['type_id'].",start_subid=".$Data['start_subid'].",notes='".$Data['notes']."',
+   update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() 
+   WHERE id=".(int)$Data['user_id']
+   ;
+   $Ds=$SQL->Update($Query);
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ 
+ }
+ 
+
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: delete user
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionDeleteUser'){
+ $Data = array(
+ 'user_id' => $_REQUEST['UserID']
+ );
+  
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."users_list WHERE id=".(int)$Data['user_id'];
+ $Ds=$SQL->Delete($Query);
+ }
+
+ 
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: password reset
+//----------------------------------------------------------------------------------- 
+ if($action == 'actionPasswordReset'){
+ $Data = array(
+ 'user_id' => $_REQUEST['UserID'],
+ 'password1' => $_REQUEST['Password1'],
+ 'password2' => $_REQUEST['Password2'],
+ 'exceptions' => array()
+ );
+  
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+  
+  if($Error == '' && $Data['password1'] != $Data['password2'])$Error = tr('MSG_ERROR_PASSWORDS_NOT_MATCH');
+   
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else {
+  $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."users_list SET password='".md5($Data['password1'])."',update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$Data['user_id'];
+  $Ds=$SQL->Update($Query);
+  $Out['message']['text'] = tr('MSG_DATA_SAVE_COMPLETE',0);
+  }
+ }
+ 
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: add/update user type
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionAddUserType'){ 
+ $Data = array(
+ 'type' => TextToDB($_REQUEST['Type']),
+ 'old_type' => TextToDB($_REQUEST['OldType']),
+ 'type_id' => $_REQUEST['TypeID'],
+ 'start_sub_id' => (isset($_REQUEST['StartSubId']) && $_REQUEST['StartSubId']!='') ? (int)$_REQUEST['StartSubId'] : 'NULL',
+ 'block_status' => $_REQUEST['BlockStatus'],
+ 'notes' => TextToDB($_REQUEST['Notes']),
+ 'exceptions' => array('type_id','old_type','start_sub_id','notes')
+ );
+  
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+
+  if($Error == '' && $SQL->GetSQLData($Data['type'],'type',$MYVAR['MYSQL']['PREFIX'].'users_types','id') != '' && $Data['old_type'] != $Data['type'])$Error = tr('MSG_ERROR_USER_TYPE_IS_ALREADY_IN_USE');
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  if($Error == ''){
+   if($Data['type_id'] == ''){
+   $Query = "
+   INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."users_types SET type='".$Data['type']."',start_subid=".$Data['start_sub_id'].",block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."',
+   create_user=".(int)$MYVAR['USER']['ID'].",create_date=NOW()
+   ";
+   $Ds=$SQL->Insert($Query);
+   }
+   else {
+   $Query = "
+   UPDATE ".$MYVAR['MYSQL']['PREFIX']."users_types SET type='".$Data['type']."',start_subid=".$Data['start_sub_id'].",block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."',
+   update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$Data['type_id']
+   ;
+   $Ds=$SQL->Update($Query);
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+
+
+//-----------------------------------------------------------------------------------
+//ACTION: delete user type
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionDeleteUserType'){ 
+ $Data = array(
+ 'type_id' => (int)$_REQUEST['TypeID']
+ );
+  
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_list WHERE type_id=".$Data['type_id'];
+ $DsC=$SQL->Select($Query);
+  if(!empty($DsC))$Error = tr('MSG_ERROR_USER_TYPE_IS_IN_USE');
+  if($Error!='')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else{
+  $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."users_types WHERE id=".$Data['type_id'];
+  $Ds=$SQL->Delete($Query);
+  }
+ 
+ }
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: save user permissions
+//-----------------------------------------------------------------------------------  
+  if($action == 'actionSavePermissions'){
+  $Data = array(
+  'type_id' => $_REQUEST['TypeID'],
+  'permission' => $_REQUEST['Permission'],
+  'delimiter' => $_REQUEST['delimiter'],
+  'exceptions' => array()
+  );
+
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }  
+   
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else {
+  $PermArray = explode($Data['delimiter'],$Data['permission']);
+   
+   $Query = "SELECT section_id,perm,is_permission FROM ".$MYVAR['MYSQL']['PREFIX']."menu";
+   $Ds=$SQL->Select($Query);
+    foreach($Ds AS $Key => $Value){
+    $StoredPermArray = ($Value['perm'] != '') ? explode(",",$Value['perm']) : array();
+    
+    $Searching = array_search($Data['type_id'],$StoredPermArray);
+     if(is_numeric($Searching))$StoredPermArray = akrem($StoredPermArray,$Searching);
+     if($Data['permission'] == 'all' || in_array($Value['section_id'],$PermArray))$StoredPermArray[] = $Data['type_id'];
+     if($Value['is_permission'] == '0') $StoredPermArray = array();
+     
+     $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."menu SET perm='".implode(",",$StoredPermArray)."' WHERE section_id='".$Value['section_id']."'";
+     $Out['queries'][] = $Query;
+     $DsU=$SQL->Update($Query);
+    }
+   $Out['message']['text'] = tr('MSG_DATA_SAVE_COMPLETE',0);
+   }
+  } 
+ 
+
+//-----------------------------------------------------------------------------------
+//ACTION: save language
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionAddLanguage'){
+  $Data = array(
+  'lang_id' => $_REQUEST['LangID'],
+  'lang_system' => $_REQUEST['LangSystem'],
+  'lang_system_old' => $_REQUEST['LangSystemOld'],
+  'lang_short' => TextToDB($_REQUEST['LangShort']),
+  'lang_long' => TextToDB($_REQUEST['LangLong']),
+  'block_status' => $_REQUEST['BlockStatus'],
+  'notes' => TextToDB($_REQUEST['Notes']),
+  'dialog_title' => tr('TITLE_ADD_LANGUAGE',0),
+  'exceptions' => array('lang_id','lang_system_old','lang_long','notes','dialog_title')
+  );
+
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+ 
+  if($Error == '' &&
+  ($SQL->GetSQLData($Data['lang_system'],'lang_system',$MYVAR['MYSQL']['PREFIX'].'lang','lang_system') != '' && $Data['lang_system_old'] == '') || 
+  ($SQL->GetSQLData($Data['lang_system'],'lang_system',$MYVAR['MYSQL']['PREFIX'].'lang','lang_system') != '' && $Data['lang_system_old'] != '' && $Data['lang_system_old'] != $Data['lang_system'])
+  )$Error = tr('MSG_ERROR_LANGUAGE_IS_ALREADY_IN_USE');
+  
+
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else {
+    if($Data['lang_id'] == ''){
+    $Query = "
+	INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."lang SET lang_system='".$Data['lang_system']."', lang_short='".$Data['lang_short']."', lang_long='".$Data['lang_long']."',
+    block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."'
+	";
+    $Ds=$SQL->Insert($Query);
+    }
+    else {
+    $Query = "
+	UPDATE ".$MYVAR['MYSQL']['PREFIX']."lang SET lang_system='".$Data['lang_system']."', lang_short='".$Data['lang_short']."', lang_long='".$Data['lang_long']."',
+    block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."' WHERE id=".(int)$Data['lang_id']
+	;
+    $Ds=$SQL->Update($Query);
+    }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ 
+ }
+ 
+
+
+//-------------------------------------------------------------------------------
+//ACTION: get languages available
+//-------------------------------------------------------------------------------
+ if($action == 'actionGetLanguages'){
+ $Out['langs'] = array();
+  foreach($MYVAR['LANGS'] as $Key => $Lang){
+  $Out['langs'][$Key]['lang_id'] = $Lang['VALUE'];
+  $Out['langs'][$Key]['lang_long'] = $Lang['lang_long'];
+  }
+ }
+
+//-------------------------------------------------------------------------------
+//ACTION: get sections for user type
+//-------------------------------------------------------------------------------
+ if($action == 'actionGetSections'){
+ $Data = array(
+ 'type_id' => (isset($_REQUEST['TypeID']) && $_REQUEST['TypeID'] != '') ? $_REQUEST['TypeID'] : '',
+ 'user_id' => (isset($_REQUEST['UserID']) && $_REQUEST['UserID'] != '') ? $_REQUEST['UserID'] : '',
+ 'sub_id' => '',
+ 'menu' => array()
+ );
+ 
+  if($Data['user_id'] != '')$Data['sub_id'] = $SQL->getSQLData($Data['user_id'],'id',$MYVAR['MYSQL']['PREFIX'].'users_list','start_subid');
+  if($Data['sub_id'] == '' && $Data['type_id'] != '')$Data['sub_id'] = $SQL->getSQLData($Data['type_id'],'id',$MYVAR['MYSQL']['PREFIX'].'users_types','start_subid');
+  
+  if($Data['type_id'] != ''){
+  $dbtree->Full('');
+   while ($item = $dbtree->NextRow()){
+   $row = $item['display_text'];
+   $dbtree1->Branch($item['section_id'],array('section_id'),array('AND'=>array('FIND_IN_SET('.$Data['type_id'].',A.perm)>0','A.show_menu_adm=1')),FALSE,'');
+   $abc = $dbtree1->RecordCount(); 
+    if($item['display_text']!='root'){
+     if($abc>0){
+     $ID = ((int)$item['is_id'] == 1) ? $item['section_id'] : 'noid';
+     $Text =  str_repeat('&nbsp;', 2 * $item['section_level']).$item['display_text'];
+	 $Data['menu'][] = array('id' => $ID, 'text' => $Text);
+     }
+    }
+   }
+  
+   if(!empty($Data['menu'])){
+   $tmpOut = '
+   <select name="StartSubId" onChange="if(this.value == \'noid\') {alert(tr({\'var\' : \'MSG_SECTION_NOT_SELECTABLE\'})); this.value=\''.$Data['sub_id'].'\';}"> 
+   <option value="">'.tr('STR_SELECT',0).'</option>
+   ';
+    foreach($Data['menu'] as $Key => $Value){
+    $tmpOut .= '<option value="'.$Value['id'].'"'.CheckSelect($Data['sub_id'],$Value['id']).'>'.TextFromDBForm($Value['text']).'</option>';
+    }
+   $tmpOut .= '
+   </select>
+   ';
+   }
+  }
+ $Out['menu'] = $Data['menu'];
+ $Out['dialog']['text'] = $tmpOut;  
+ }
+
+
+
+//-------------------------------------------------------------------------------
+//ACTION: get tags
+//-------------------------------------------------------------------------------
+ if($action == 'actionGetTags'){
+ $Data = array(
+ 'search' => (isset($_REQUEST['Search']) && $_REQUEST['Search'] != '') ? $_REQUEST['Search'] : '',
+ 'results' => array(),
+ 'tags' => array()
+ );
+ 
+ $Query = "SELECT id,tags FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE tags LIKE '%".$Data['search']."%'";
+ $Ds=$SQL->Select($Query);
+ 
+  if(!empty($Ds)){
+   foreach($Ds as $Key => $Value){
+   $Query = "SELECT tags FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE id=".(int)$Value['id'];
+   $DsP=$SQL->Select($Query);
+    if(!empty($DsP)){
+	$Tmp = explode(',',$DsP[0]['tags']);
+	 foreach($Tmp as $SubKey => $SubValue){
+	  if(strpos($SubValue, $Data['search']) !== false && !in_array($SubValue,$Data['results']))$Data['results'][] = $SubValue;
+	 }
+	}
+   }
+  }
+ 
+ foreach($Data['results'] as $SubKey => $SubValue){
+ $Data['tags'][] = array('label' => $SubValue, 'value' => $SubValue);
+ }
+ $Out['results'] = $Data['tags'];
+ }
+
+
+ if($action == 'dialogAddUser'){
+
+ }
+ 
+ 
+?>

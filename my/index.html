@@ -1,0 +1,153 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'].'/my/.inc/.inc_header.html';
+
+//printr($MYVAR);
+
+$a = getCacheLangVars();
+$a = array_unique($a);
+$lg = array();
+
+ foreach($a AS $Key => $Value){
+ $Translation = tr($Value, 0);
+ $lg[$Value] = $Translation; 
+ } 
+ $lg_json = json_encode($lg);
+
+echo'
+<script language="JavaScript" type="text/javascript">
+lg = '.$lg_json.';
+</script>
+';
+
+
+//printr($MYVAR);
+echo'
+<div id="main">
+
+<div id="left">
+<div id="left-top">
+<!---->
+';
+ if($MYVAR['USER']['ID'] != ''){
+ echo'
+ <div class="logged-div">
+ 
+ <div class="icon-user align-left"><!----></div>
+ <div class="logged-user-name align-left">
+ <span>'.$MYVAR['USER']['NAME'].'</span>
+ <span class="align-right">
+ ';
+  foreach($MYVAR['LANGS'] AS $Key => $Value){
+  $Text = $Value['lang_short'];
+   if(@file_exists($MYVAR['SITE_ROOT'].'/img/flags/'.$Value['lang_system'].'.png'))$Text = '<img src="'.$MYVAR['SITE_HTTP'].'img/flags/'.$Value['lang_system'].'.png"/> ';
+   if(strtolower($Value['lang_system']) != strtolower($MYVAR['LANG']))echo '<span id="id-lang-'.$Value['lang_system'].'" class="language">'.$Text.'</span>';
+  }
+ echo'
+ </span>
+ </div>
+ <div class="logged-user-string align-left">IP: '.$MYVAR['USER']['IP'].'</div>
+ <div class="icon-exit align-left"><!----></div>
+ <div class="logged-user-exit align-left"><span id="id-linkLogout">'.tr('LINK_EXIT',0).'</span></div>
+ 
+ </div>
+ ';
+ }
+
+echo'
+</div>
+<div id="left-center">
+';
+ if($MYVAR['USER']['ID'] == ''){
+ echo'
+ <form name="formLogin" action="" method="post" id="formLogin">
+ <input type="text" name="username" class="Design LoginUser" maxlength="16"/>
+ <input type="password" name="password" class="Design LoginPwd" maxlength="16"/>
+ <input type="hidden" name="postAction" value="Login"/>
+ '.myButton(array('text'=>tr('BTTN_LOGIN',0),'onclick'=>'actionLogin($(this))')).'
+ </form>
+ 
+ ';
+ }
+ else {
+ 	
+ echo myMenu().'
+ <script type="text/javascript" src="'.$MYVAR['HTTP'].'scripts/menu.js"></script>
+ ';
+ }
+
+
+echo'
+ </div>
+ <div id="left-bottom">'.tr('STR_DISTRADE_CMS').'</div>
+
+</div>
+
+
+<div id="content">
+<div id="content-top"><!----></div>
+<div id="content-center">
+';
+
+ if($MYVAR['USER']['ID']!=''){
+  if($SubId=='')$mySec = $MYVAR['SECTION'].'first_page.html';
+  else{
+   if($MYVAR['SUB_ID']['TYPE']=='0')$mySec = $MYVAR['SECTION'].'.inc_id_editor.html';
+   else $mySec = $MYVAR['SECTION'].'.inc_id_'.$SubId.'.html';
+   if(!@file_exists($mySec))$mySec = $MYVAR['SECTION'].'not_found.html';
+   if(!userPermission($SubId))$mySec = $MYVAR['SECTION'].'authorize.html';
+  }
+ }
+ else $mySec = $MYVAR['SECTION'].'first_page.html';
+ require $mySec;
+
+echo'
+</div>
+</div>
+
+
+
+</div>
+';
+
+$Tmp = actionGetNotification();
+$Notify = array('items' => array(0 => array('id' => '<!---->', 'type' => '<!---->', 'item_id' => '<!---->', 'title' => '<!---->', 'text' => '<!---->', 'date' => '<!---->')), 'items_string' => '', 'items_html' => '<!---->');
+
+  if($Tmp['status'] == 'idle'){
+  $Top = '-50px';
+  }
+  else {
+  $Top = '-1px';
+  $Notify['items'] = $Tmp['items'];
+  $Notify['items_string'] = $Tmp['items_string']; 
+  $Notify['items_html'] = $Tmp['items_html'];
+  }
+
+
+echo'  
+<div id="id-divNotification" class="ui-widget-content ui-corner-bottom ui-state-highlight" style="position:fixed; top:'.$Top.'; right:50px; width:250px; height:37px;">
+ 
+ <div class="notify align-left">
+  <div id="id-divNotifyIcon" class="ui-state-error ui-corner-all align-left notify-icon" style="display: inline-block;"><div class="ui-icon ui-icon-mail-closed"><!----></div></div>
+  <div id="id-divNotifyText">
+  <span class="notify-date align-right">'.$Notify['items'][0]['date'].'</span>
+  <span class="notify-text align-left">'.$Notify['items'][0]['title'].'</span>
+  
+  </div>
+  <div id="id-divNotifyData" class="object-hidden">
+   <span class="id">'.$Notify['items'][0]['id'].'</span>
+   <span class="type">'.$Notify['items'][0]['type'].'</span>
+   <span class="item-id">'.$Notify['items'][0]['item_id'].'</span>
+   <span class="text">'.$Notify['items'][0]['text'].'</span>
+   <span class="items-data">'.$Notify['items_html'].'</span>
+  </div>
+  
+ </div>
+</div>
+
+
+</body>
+</html>
+';
+
+
+?>

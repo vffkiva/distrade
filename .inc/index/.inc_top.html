@@ -1,0 +1,111 @@
+<?php
+
+ foreach($Modules['TOP'] as $Key => $Value){
+ $Module = array_merge(array('module_type' => '', 'module_id' => '', 'show_title' => '', 'show_navigation' => '', 'text' => ''), $Value['params']);
+
+  if($Module['module_type'] == 'news'){
+  $Query = "SELECT date,title, description, text FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE news_id=".(int)$Module['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+   $Title = $ModuleText = (iconv_strlen($Ds[0]['description'],'UTF-8') >= 330) ? iconv_substr($Ds[0]['description'],0,330,'UTF-8').'...' : $Ds[0]['description'];
+   $Text = strip_tags($Ds[0]['text']);
+    if($Title == '') $ModuleText = (iconv_strlen($Text,'UTF-8') >= 330) ? iconv_substr($Text,0,330,'UTF-8').'...' : $Text;
+   $Module['text'] = '
+	   <div class="news-text">
+        <div class="title">'.myDate($Ds[0]['date']).' <span>'.strhtml($Ds[0]['title']).'</span></div>
+	    <div class="text">'.$ModuleText.'</div>
+		<div class="hidden-object"><span class="link">'.$MYVAR['HTTP'].'?_news='.$Module['module_id'].'</span></div>
+	   </div>
+   ';
+   }
+  }
+ 
+  if($Module['module_type'] == 'module'){
+  $Query = "SELECT title, description, text FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE id=".(int)$Module['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+   $Title = $ModuleText = (iconv_strlen(strip_tags($Ds[0]['description']),'UTF-8') >= 330) ? iconv_substr(strip_tags($Ds[0]['description']),0,330,'UTF-8').'...' : strip_tags($Ds[0]['description']);
+   $Text = strip_tags($Ds[0]['text']);
+    if($Title == '') $ModuleText = (iconv_strlen($Text,'UTF-8') >= 330) ? iconv_substr($Text,0,330,'UTF-8').'...' : $Text;
+   $Module['text'] = '
+	   <div class="news-text">
+        <div class="title"><span>'.strhtml($Ds[0]['title']).'</span></div>
+	    <div class="text">'.$ModuleText.'</div>
+		<div class="hidden-object"><span class="link">'.$MYVAR['HTTP'].'?_module='.$Module['module_id'].'</span></div>
+	   </div>
+   ';
+   }
+  }
+ 
+  if($Module['module_type'] == 'all-news'){
+  $Query = "SELECT news_id, date, title, description, text FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE block_status=0 AND rotation=1 AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY date DESC";
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+    if(count($Ds) > 1) $Module['text'] = '<div class="controls" style="bottom: -60px;"><div class="back"><!----></div><div class="left"><!----></div><div class="right"><!----></div></div>';
+    foreach($Ds AS $Key1 => $Value1){
+    $Title = $ModuleText = (iconv_strlen($Value1['description'],'UTF-8') >= 330) ? iconv_substr($Value1['description'],0,330,'UTF-8').'...' : $Value1['description'];
+    $Text = strip_tags($Value1['text']);
+     if($Title == '') $ModuleText = (iconv_strlen($Text,'UTF-8') >= 330) ? iconv_substr($Text,0,330,'UTF-8').'...' : $Text;
+    $Module['text'] .= '
+	   <div class="news-text">
+        <div class="title">'.myDate($Value1['date']).' <span>'.strhtml($Value1['title']).'</span></div>
+	    <div class="text">'.$ModuleText.'</div>
+	    <div class="hidden-object"><span class="link">'.$MYVAR['HTTP'].'?_news='.$Value1['news_id'].'</span></div>
+	   </div>  
+    ';
+    }
+   }
+  }
+  
+  
+  if($Module['module_type'] == 'banner' && $Module['module_id'] != ''){
+  $Module['text'] = showBanner(array('banner_id'=>$Module['module_id']));
+  }
+  
+  
+  if($Module['text'] != ''){
+  echo '
+    <div class="news">
+     <div class="bar"><!----></div>
+     <div class="block">
+	  <div class="frame">
+	  '.$Module['text'].'
+	  </div>
+	 </div>
+    </div> 
+  ';
+  }
+ } 
+
+
+/* 
+    <div class="news">
+     <div class="bar"><!----></div>
+     <div class="block">
+	  <div class="frame">
+	  
+	   <div class="controls" style="bottom: -60px;"><div class="back"><!----></div><div class="left"><!----></div><div class="right"><!----></div></div>
+	  
+	   <div class="news-text">
+        <div class="title">10/20/2014 <span>News title</span></div>
+	    <div class="text ellipsis">
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. It has
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type
+		</div>
+	   </div>
+
+
+	   <div class="news-text">
+        <div class="title">11/21/2014 <span>News title 1</span></div>
+	    <div class="text ellipsis">
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111
+		</div>
+	   </div>
+
+	   
+	   </div>
+	  </div>
+	</div>
+*/
+?>

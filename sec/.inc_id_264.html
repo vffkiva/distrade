@@ -1,0 +1,103 @@
+<?php
+$Data = array(
+'title' => tr('STR_ASSORTMENT',0),
+'text' => 'ABC',
+'country' => '',
+'manufacturer' => '',
+'type' => '',
+'horeca' => '',
+'tags' => '',
+'tags_string' => '',
+'galleries' => ''
+);
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id=".(int)$MYVAR['SUB_ID']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Data['title'] = showTitle($MYVAR['SUB_ID']);
+ $Data['text'] = prepareSectionText(array('text'=>$Ds[0]['text']));
+ }
+
+$Filter = array(
+	'key' => $SubId,
+	'text' => '',
+	'query' => '',
+	'if' => '',
+		'fields' => actionGetFilterFields(array('key' => 'products'))
+	);
+
+ if(isset($Filter['fields']['country']))$Data['country'] = $Filter['fields']['country'];
+ if(isset($Filter['fields']['manufacturer']))$Data['manufacturer'] = $Filter['fields']['manufacturer_id'];
+ if(isset($Filter['fields']['type']))$Data['type'] = $Filter['fields']['type'];
+ if(isset($Filter['fields']['horeca']))$Data['horeca'] = $Filter['fields']['horeca'];
+ if(isset($Filter['fields']['tags']))$Data['tags'] = $Filter['fields']['tags'];
+ 
+ if($Data['tags'] != ''){
+ $Tmp = explode(',',$Data['tags']);
+  foreach($Tmp as $Key => $Value){
+  $Data['tags_string'] .= '<div class="message-item ui-accordion-header ui-state-default ui-corner-all" style="display:inline-block; height:18px;"><span class="text">'.$Value.'</span><span class="ui-icon ui-icon-close"><!----></span></div>';
+  }
+ }
+ 
+
+echo'
+<div class="main-section-cell">
+ <div class="main-section">
+  <div class="title"><div class="section-title">'.$Data['title'].'</div></div>
+  <div class="text" id="id-products">
+   <div class="filter">
+   <form name="ActionForm" method="post">
+   <table>
+   <tr>
+   <td>
+   <select name="Country" class="design">
+   <option value="">'.tr('STR_COUNTRY',0).'</option>
+   ';
+   $Countries = Table2Arr("SELECT DISTINCT(country) AS country FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers WHERE lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY country",'country','country');
+    foreach($Countries AS $Key => $Value)echo '<option value="'.$Value['VALUE'].'"'.CheckSelect($Data['country'],$Value['VALUE']).'>'.strhtml($Value['TEXT']).'</option>';
+   echo'
+   </select>
+</td>
+<td>
+   <select name="Manufacturer" class="design">
+   <option value="">'.tr('STR_MANUFACTURER',0).'</option>
+   ';
+   $Manufacturers = Table2Arr("SELECT DISTINCT(manufacturer_id) AS manufacturer_id, name AS manufacturer  FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers WHERE block_status=0 AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY name",'manufacturer','manufacturer_id');
+	foreach($Manufacturers AS $Key => $Value)echo '<option value="'.$Value['VALUE'].'"'.CheckSelect($Data['manufacturer'],$Value['VALUE']).'>'.strhtml($Value['TEXT']).'</option>';
+   echo'
+   </select>
+</td>
+<td>
+   <select name="Type" class="design">
+   <option value="">'.tr('STR_PRODUCT_TYPE',0).'</option>
+';
+   $Types = Table2Arr("SELECT DISTINCT(type) AS type FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY type",'type','type');
+	foreach($Types AS $Key => $Value)echo '<option value="'.$Value['VALUE'].'"'.CheckSelect($Data['type'],$Value['VALUE']).'>'.tr('STR_PRODUCT_TYPE_'.strtoupper($Value['TEXT']),0).'</option>';
+   echo'
+   </select>
+</td>
+<td>
+   <div style="display: inline-block;" class="design"><span style="padding:3px;">'.tr('STR_HORECA',0).'</span><span style="padding:3px; vertical-align:middle;"><input type="checkbox" name="Horeca" value="set" class="design"'.CheckBox($Data['horeca'],'set').'/></span></div>
+</td>
+<td>
+   <div style="display: inline-block; padding: 4px;" class="design width400"><span id="id-tags">'.$Data['tags_string'].'</span><input type="text" name="Tags" value="'.tr('STR_TAGS',0).'" class="width100 design" style="border:1px solid white; padding:1px; color: rgb(220,220,220);" maxlength="15"/></div>
+   <div style="display: inline-block; padding:5px; line-height:10px;">'.myButton(array('text' => tr('BTTN_SEARCH'), 'onclick' => 'actionGetProducts({})', 'style' => 'vertical-align: baseline')).'</div>
+</td>
+</tr>
+</table>
+   </form>
+   </div>
+   <div class="products text-center"><!----></div>
+   <div class="pager"><!----></div>
+  </div> 
+ </div>
+</div>
+';
+
+?>
+<script type="text/javascript" language="javascript">
+	$(document).ready(function(){
+	$('#id-products').find('select[name="Manufacturer"]').val(getURLParameter('fmanufacturer'));
+	actionGetProducts({});
+	});
+</script>

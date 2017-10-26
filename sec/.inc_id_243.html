@@ -1,0 +1,32 @@
+<?php
+$Data = array(
+'title' => '',
+'date' => '',
+'text' => '',
+'galleries' => ''
+);
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE news_id=".(int)$MYVAR['MODULE_ID']." AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY date DESC";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Data['title'] = strhtml($Ds[0]['title']);
+ $Data['text'] = prepareSectionText(array('text'=>$Ds[0]['text']));
+ $Data['date'] = myDate($Ds[0]['date']);
+ }
+
+ $Query = "SELECT COUNT(id) AS total FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE lang_id=".(int)$MYVAR['LANG_ID'];
+ $Ds=$SQL->Select($Query);
+ if(!empty($Ds) && (int)$Ds[0]['total'] > 1) echo '
+ <div class="more-news"><span class="link main-href">'.tr('STR_LINK_NEWS_LIST').'</span></div>
+ ';
+ 
+ if($Data['text'] != ''){
+ echo'
+<div class="one-news">
+  <div class="title"><span class="date">'.$Data['date'].'</span> <span class="text">'.$Data['title'].'</span></div>
+  <div class="text">'.$Data['text'].'</div> 
+  '.(($Data['galleries'] != '') ? '<div class="gallery">'.showGallery($Data['galleries']).'</div>' : '').'
+</div>
+ ';
+ }
+?>

@@ -1,0 +1,132 @@
+<?php
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
+
+
+if (get_magic_quotes_gpc()) {
+    $process = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
+    while (list($key, $val) = each($process)) {
+        foreach ($val as $k => $v) {
+            unset($process[$key][$k]);
+            if (is_array($v)) {
+                $process[$key][stripslashes($k)] = $v;
+                $process[] = &$process[$key][stripslashes($k)];
+            } else {
+                $process[$key][stripslashes($k)] = stripslashes($v);
+            }
+        }
+    }
+    unset($process);
+}
+
+
+//---------------------------------------------------------------------------------
+//Variables for computing page generation time
+//---------------------------------------------------------------------------------
+$PageMtime = microtime();
+$PageMtime = explode(" ",$PageMtime);
+$PageMtime = $PageMtime[1] + $PageMtime[0];
+$PageStartTime = $PageMtime;
+
+//---------------------------------------------------------------------------------
+//Main variables
+//---------------------------------------------------------------------------------
+$MYVAR['SITE_ROOT'] = $_SERVER['DOCUMENT_ROOT'].'/';
+$MYVAR['SITE_HTTP'] = 'http://'.$_SERVER['HTTP_HOST'].'/';
+$MYVAR['ROOT'] = $MYVAR['SITE_ROOT'].'my/';
+$MYVAR['HTTP'] = $MYVAR['SITE_HTTP'].'my/';
+
+$MYVAR['UPLOADED_FILES_ROOT'] = $_SERVER['DOCUMENT_ROOT'].'/files/';
+$MYVAR['SESSION'] = $MYVAR['ROOT'].'sessions/';
+$MYVAR['SECTION'] = $MYVAR['ROOT'].'sec/';
+$MYVAR['SETTINGS'] = $MYVAR['ROOT'].'.settings/';
+$MYVAR['AJAX'] = $MYVAR['HTTP'].'/tools/ajax/actions.html';
+$MYVAR['SPECIAL_URL']='';
+$MYVAR['CACHE'] = $_SERVER['DOCUMENT_ROOT'].'/cache/';
+
+
+$MYVAR['SHORT_URL'] = $_SERVER["PHP_SELF"].'?'.$_SERVER["QUERY_STRING"];
+$MYVAR['LONG_URL'] = $MYVAR['HTTP'].'?'.$_SERVER["QUERY_STRING"];
+
+$MYVAR['VAR_COUNTER'] = 0;
+$MYVAR['MSG_ATTACHMENTS'] = $MYVAR['ROOT'].'files/messages/';
+$MYVAR['TR_ATTACHMENTS'] = $MYVAR['ROOT'].'files/transactions/';
+$MYVAR['REQUEST_ATTACHMENTS'] = $MYVAR['ROOT'].'files/requests/';
+
+$MYVAR['MSG_ATTACHMENTS_HTTP'] = $MYVAR['HTTP'].'files/messages/';
+
+
+
+
+//---------------------------------------------------------------------------------
+//Starting session
+//---------------------------------------------------------------------------------
+session_save_path($MYVAR['SESSION']);
+session_start();
+
+$MYVAR['USER']['ID'] = (isset($_SESSION['UserID']) && $_SESSION['UserID']!='') ? $_SESSION['UserID'] : '';
+$MYVAR['LANG'] = (isset($_SESSION['Lang']) && $_SESSION['Lang'] !='') ? $_SESSION['Lang'] : '';
+$MYVAR['LANG'] = ($MYVAR['LANG']=='')?'ru':$MYVAR['LANG'];
+$MYVAR['REQUEST'] = (isset($_SESSION['request']) && $_SESSION['request'] !='') ? $_SESSION['request'] : array();
+$MYVAR['MESSAGE'] = (isset($_SESSION['message']) && $_SESSION['message'] !='') ? json_decode($_SESSION['message'],true) : array();
+
+unset($_SESSION['request']);
+
+ if($MYVAR['USER']['ID'] == '') {
+ unset($_SESSION['User']);
+ $Section = 'intro';
+ }
+ else{
+// $_SESSION['KCFINDER'] = array();
+// $_SESSION['KCFINDER']['disabled'] = false;
+// $_SESSION['KCFINDER']['uploadURL'] = $MYVAR['HTTP'].'files';
+// $_SESSION['KCFINDER']['uploadDir'] = $MYVAR['ROOT'].'files';
+ }
+
+//---------------------------------------------------------------------------------
+//IP variables
+//---------------------------------------------------------------------------------
+ if (getenv("HTTP_CLIENT_IP") && strcasecmp(getenv("HTTP_CLIENT_IP"), "unknown")) $MYVAR['USER']['IP'] = getenv("HTTP_CLIENT_IP");
+ else if (getenv("HTTP_X_FORWARDED_FOR") && strcasecmp(getenv("HTTP_X_FORWARDED_FOR"), "unknown")) $MYVAR['USER']['IP'] = getenv("HTTP_X_FORWARDED_FOR");
+ else if (getenv("REMOTE_ADDR") && strcasecmp(getenv("REMOTE_ADDR"), "unknown")) $MYVAR['USER']['IP'] = getenv("REMOTE_ADDR");
+ else if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], "unknown")) $MYVAR['USER']['IP'] = $_SERVER['REMOTE_ADDR'];
+ else $MYVAR['USER']['IP'] = "unknown";
+
+
+$MYVAR['ONLINE'] = array('IDLE' => 100, 'TIMEOUT' => 300, 'IS_AJAX' => 0, 'GET' => '', 'POST' => '', 'SCRIPT' => $_SERVER['SCRIPT_NAME'], 'SUB_ID' => '');
+
+
+//---------------------------------------------------------------------------------
+//Parsing variables
+//---------------------------------------------------------------------------------
+ while (list($key, $val) = each($_GET)){
+ $key = stripslashes($key);
+ $val = stripslashes($val);
+ $key = urldecode($key);
+ $val = urldecode($val);
+// ${$key} = $val;
+  if($key == 'SubId')$MYVAR['ONLINE']['SUB_ID'] = $val;
+  else $MYVAR['ONLINE']['GET'] .= $key.'='.$val.'&';
+ }
+
+ 
+ while (list($key, $val) = each($_POST)){
+ $key = stripslashes($key);
+ $val = stripslashes($val);
+ $key = urldecode($key);
+ $val = urldecode($val);
+// ${$key} = $val;
+ 
+  if($key == 'SubId')$MYVAR['ONLINE']['SUB_ID'] = $val; 
+  else $MYVAR['ONLINE']['POST'] .= $key.'='.$val.'&';
+ }
+
+
+ if($MYVAR['ONLINE']['GET']!='')$MYVAR['ONLINE']['GET'] = substr($MYVAR['ONLINE']['GET'],0,strlen($MYVAR['ONLINE']['GET'])-1);
+ if($MYVAR['ONLINE']['POST']!='')$MYVAR['ONLINE']['POST'] = substr($MYVAR['ONLINE']['POST'],0,strlen($MYVAR['ONLINE']['POST'])-1);
+ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')$MYVAR['ONLINE']['IS_AJAX'] = 1;
+
+
+$SubId = (isset($_REQUEST['SubId']) && (int)$_REQUEST['SubId'] > 0) ? $_REQUEST['SubId'] : '';
+
+?>

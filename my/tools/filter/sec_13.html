@@ -1,0 +1,26 @@
+<?php
+$Data['fields'] = array(
+'name' => ((isset($Data['fields']['name'])) ? $Data['fields']['name'] : ''),
+'type_id' => ((isset($Data['fields']['type_id'])) ? $Data['fields']['type_id'] : ''),
+'types' => Table2Arr("SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_types ORDER BY type",'type','id', 'block_status'),
+);
+
+$tmpOut .= '
+<tr>
+<td>'.tr('STR_USER_TYPE').'</td>
+<td><select name="type_id" class="Design">
+<option value="">'.tr('STR_ANY_MALE').'</option>
+';
+ foreach($Data['fields']['types'] AS $Key => $Value){
+ $Text = ((int)$Value['block_status'] == 1) ? ' ('.tr('STR_BLOCK_STATUS_1').')' : '';
+ $tmpOut .= '<option value="'.$Value['VALUE'].'"'.CheckSelect($Value['VALUE'],$Data['fields']['type_id']).'>'.$Value['TEXT'].$Text.'</option>';
+ }
+$tmpOut .= '
+</select></td>
+</tr>
+<tr>
+<td>'.tr('STR_NAME').'</td>
+<td><input type="text" name="name" class="Design width200" value="'.$Data['fields']['name'].'"/></td>
+</tr>
+';
+?>

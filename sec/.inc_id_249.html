@@ -1,0 +1,23 @@
+<?php
+$Data = array(
+'title' => '',
+'text' => '',
+);
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE module_id=".(int)$MYVAR['MODULE_ID']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Data['title'] = strhtml($Ds[0]['title']);
+ $Data['text'] = $Ds[0]['text'];
+ }
+ 
+
+echo'
+<div class="main-section-cell">
+ <div class="main-section">
+  <div class="title"><div class="section-title">'.$Data['title'].'</div></div>
+  <div class="text">'.$Data['text'].'</div> 
+ </div>
+</div>
+';
+?>

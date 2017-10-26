@@ -1,0 +1,41 @@
+<?php
+ $Error = '';
+
+
+//-------------------------------------------------------------------------------
+//Request method == 'POST'
+//-------------------------------------------------------------------------------
+ if($_SERVER["REQUEST_METHOD"] == 'POST'){
+ $postAction = $_REQUEST['postAction'];
+ 
+
+ }
+
+
+
+
+//-------------------------------------------------------------------------------
+//Request method == 'GET'
+//-------------------------------------------------------------------------------
+ if($_SERVER["REQUEST_METHOD"] == 'GET'){
+ $getAction = (isset($_REQUEST['getAction']) && $_REQUEST['getAction'] != '') ? $_REQUEST['getAction'] : '';
+ $PageID = (isset($_REQUEST['_page']) && $_REQUEST['_page'] != '') ? $_REQUEST['_page'] : '';
+ $Lang = (isset($_REQUEST['_lang']) && $_REQUEST['_lang'] != '') ? $_REQUEST['_lang'] : '';
+ 
+  if($Lang != ''){
+   if($MYVAR['LANG'] != $Lang){
+    foreach($MYVAR['LANGS'] as $Langs){
+     if($Langs['lang_system'] == $Lang){
+     WriteToSession('Lang',$Lang);
+     $Redirect = $MYVAR['HTTP'];
+     header("Location: ".$Redirect."\n\n");
+     exit;
+     }
+    }
+   }
+  }
+ 
+
+ }
+
+?>

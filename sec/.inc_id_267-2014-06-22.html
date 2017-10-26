@@ -1,0 +1,69 @@
+<?php
+$Data = array(
+'title' => '',
+'text' => '',
+);
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE product_id=".(int)$MYVAR['MODULE_ID']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $Data['title'] = stripslashes($Ds[0]['product']);
+ $Data['text'] = stripslashes($Ds[0]['description']);
+ }
+ 
+//printr($Ds);
+echo'
+<div class="main-section-cell">
+ <div class="main-section">
+  <div class="title"><div class="section-title">'.$Data['title'].'</div></div>
+  <div class="text">'.$Data['text'].'</div>
+  <div class="details">
+   <table>
+   <tr>
+   <td class="bold">'.tr('STR_PRODUCT_TYPE').':</td>
+   <td>'.(($Ds[0]['type'] != '') ? tr('STR_PRODUCT_TYPE_'.strtoupper($Ds[0]['type'])) : '').'</td>
+   </tr>
+   <tr>
+   <td class="bold">'.tr('STR_PRODUCT_HORECA').':</td>
+   <td>'.(($Ds[0]['horeca'] != '') ? (((int)$Ds[0]['horeca'] == 1) ? tr('STR_YES') : tr('STR_NO')) : '').'</td>
+   </tr>   
+   <tr>
+   <td class="bold">'.tr('STR_WEIGHT_NETTO').':</td>
+   <td>'.$Ds[0]['netto'].'</td>
+   </tr>
+   <tr>
+   <td class="bold">'.tr('STR_ITEMS_PER_BOX').':</td>
+   <td>'.$Ds[0]['items_per_box'].'</td>
+   </tr>
+   <tr>
+   <td class="bold">'.tr('STR_BOX_PER_PALETE').':</td>
+   <td>'.$Ds[0]['box_per_palete'].'</td>
+   </tr>
+';
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module LIKE 'product' AND module_id=".(int)$MYVAR['MODULE_ID'];
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ echo'<tr><td colspan="2">';
+ 
+ echo '<div id="tab-nr-'.$MYVAR['UNIQUE'].'" class="my-tabs"><ul>
+ 
+  <li>
+  <a href="/tools/ajax.html?action=actionGetGalleryPics&ProductID='.$MYVAR['MODULE_ID'].'"><span>'.TextFromDB('aaa').'</span></a>
+  </li>
+  ';
+  
+ echo '
+ </ul>
+  <div id="tab-content-'.$MYVAR['UNIQUE'].'"><!----></div>
+ </div>
+ ';
+ $MYVAR['UNIQUE']++;
+ echo'</td></tr>';
+ }
+echo'
+   </table>
+  </div>
+ </div>
+</div>
+';
+?>

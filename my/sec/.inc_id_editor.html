@@ -1,0 +1,110 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$TopSlider = '';
+
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ ${'Title_'.$Key} = '';
+ ${'SectionText_'.$Key} = '';	
+ }
+
+ if($SubId!=''){
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id='".$SubId."' AND lang_id='".$Lang['VALUE']."'";
+  $Ds=$SQL->Select($Query);
+   if($Ds){
+   $TopSlider = $Ds[0]['top_slider'];
+   ${'Title_'.$Key} = TextFromDBForm($Ds[0]['title']);
+   ${'SectionText_'.$Key} = $Ds[0]['text'];
+   }
+  }
+ }
+ 
+ 
+//printr($MYVAR['LANGS']); 
+$Colspan = sizeof($MYVAR['LANGS']) +1;
+//echo $Colspan;
+
+echo'
+<script type="text/javascript" src="/my/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="/my/scripts/editor.js" language="javascript"></script>
+
+
+
+<form name="id-formEditor" action="" method="post" class="editor-form" id="id-formEditor">
+<table class="table-class1" width="100%">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr><td class="table-row1 height100" colspan="'.$Colspan.'"><div style="position: fixed;top:53px; left:253px;"><div id="EditorToolbar"><!----></div></div></td></tr>
+<tr>
+<td class="table-row1" colspan="'.$Colspan.'">
+';
+$JS = '';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+<span class="editor-row1">'.tr('STR_LANGUAGE').': '.$Lang['lang_long'].'</span>
+<label class="editor-row1" for="Title_'.$Key.'">'.tr('STR_SECTION_TITLE').': </label>
+<input type="text" name="Title_'.$Key.'" value="'.${'Title_'.$Key}.'" size="50" class="Design InputEditor"/> <a class="link-sub" href="#" id="button-editor-title-style_'.$Key.'"><b>'.tr('STR_STYLE_SETTINGS').'</b></a>
+<textarea rows="2" cols="2" name="SectionText_'.$Key.'" id="SectionText_'.$Key.'">'.${'SectionText_'.$Key}.'</textarea>
+<input type="hidden" name="LangID_'.$Key.'" value="'.$Lang['VALUE'].'"/>
+ ';
+ 
+ $JS .= "
+CKEDITOR.replace( 'SectionText_".$Key."',
+	{
+	customConfig : '/my/ckeditor/my_config.js',
+	toolbar: 'Section',
+	enterMode : CKEDITOR.ENTER_BR,
+	shiftEnterMode: CKEDITOR.ENTER_P,
+	sharedSpaces :
+		{
+		top : 'EditorToolbar',
+		bottom : 'EditorFooter'
+		}
+    }); 
+ ";
+ }
+echo'
+</td>
+</tr>
+<tr>
+<td class="table-row-footer" colspan="'.$Colspan.'"><div id="EditorFooter"><!----></div></td>
+</tr>
+<tr>
+<td class="table-row1">'.tr('STR_SELECT_GALLERY_FOR_SLIDER').'</td>
+<td class="table-row1" colspan="'.($Colspan-1).'">
+<select name="TopSlider" class="Design">
+<option value=""><!----></option>
+<option class="bold" value="default"'.CheckSelect('default',$TopSlider).'>'.tr('STR_DEFAULT_SLIDE_BANNER',0).'</option>
+<option class="bold" value="none"'.CheckSelect('none',$TopSlider).'>'.tr('STR_DO_NOT_SHOW_SLIDE_BANNER',0).'</option>
+';
+$Query = "SELECT gallery_id, name FROM ".$MYVAR['MYSQL']['PREFIX']."gallery WHERE block_status=0 AND lang_id=".(int)$MYVAR['LANG_ID'];
+$Galleries = Table2Arr($Query,'name','gallery_id');
+ foreach($Galleries AS $Key => $Gallery)echo '<option value="'.$Gallery['VALUE'].'"'.CheckSelect($Gallery['VALUE'],$TopSlider).'>'.$Gallery['TEXT'].'</option>';
+echo'
+</select>
+</td>
+</tr>
+';
+ foreach($MYVAR['LANGS'] AS $Key => $Lang){
+ echo'
+ <tr>
+ <td class="table-row1">'.tr('STR_SHOW_PREVIEW').' ('.$Lang['lang_long'].')</td>
+ <td class="table-row1">'.myButton(array('text'=>tr('BTTN_SHOW',0),'onclick'=>'dialogShowSectionPreview({\'lang_id\' : \''.$Lang['VALUE'].'\', \'sub_id\' : \''.$SubId.'\'})')).'</td>
+ </tr>
+ ';
+ }
+
+echo'
+<tr>
+<td class="table-row-footer" colspan="'.$Colspan.'">
+
+<input type="hidden" name="SubId" value="'.$SubId.'"/>
+'.myButton(array('text'=>tr('BTTN_SAVE',0),'onclick'=>'actionSaveSection({\'redirect\' : \'?SubId='.$SubId.'\'});')).'
+</td>
+</tr>
+</table>
+</form>
+<script type="text/javascript" language="javascript"> 
+'.$JS.'
+</script>
+';
+?>

@@ -1,0 +1,207 @@
+<?php
+
+//-----------------------------------------------------------------------------------
+//DIALOG: add/update node in menu
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogAddNode'){
+ $MenuArr = array();
+ $dbtree->Full('');
+  while ($item = $dbtree->NextRow()) {
+  
+  $dbtree1->Branch($item['section_id'],array('section_id'),array('AND'=>array('FIND_IN_SET(1,A.perm)>0','A.show_menu=1')),FALSE,'');
+  $abc = $dbtree1->RecordCount(); 
+  $Tmp = array();
+  $dbtree1->Branch($item['section_id'],array('section_id'),FALSE,'');
+   while ($row = $dbtree1->NextRow()) $Tmp[sizeof($Tmp)] = $row['section_id'];
+  $Childs = implode("|", $Tmp).'::'.$item['section_level'];
+   if($item['display_text']!='root'){
+    if($abc>0){
+     if($item['is_id']==1) $ShowText = netViewNode($item['section_id']).':||:'.$item['section_id'];
+     else $ShowText = netViewNode($item['section_id']).':||:noID';
+    $MenuArr[sizeof($MenuArr)] = str_repeat('&nbsp;', 2 * $item['section_level']).$ShowText;
+    }
+   }
+  }
+  
+ $Data = array(
+ 'node_id' => $_REQUEST['NodeID'],
+ 'sub-action' => $_REQUEST['SubAction'],
+ 'is_id' => '',
+ 'is_href' => '',
+ 'type' => '',
+ 'show_menu' => '',
+ 'show_menu_adm' => '',
+ 'link_sub_id' => '',
+ 'onclick' => '',
+ 'text' => '',
+ 'is_permission' => '',
+ 'dialog_title' => tr('TITLE_NODE_ADD',0)
+ );
+  foreach($MYVAR['LANGS'] AS $Key => $Lang)$Data['text_'.$Key] = '';
+
+  if($Data['sub-action'] == 'change'){
+  $Data['dialog_title'] = tr('TITLE_NODE_EDIT',0);
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id='".$Data['node_id']."'";
+  $Ds=$SQL->Select($Query);
+    if(!empty($Ds)){
+    $Data['text'] = $Ds[0]['display_text'];
+    
+     foreach($MYVAR['LANGS'] AS $Key => $Lang){
+     $Query = "SELECT text FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id='".$Data['node_id']."' AND lang_id='".$Lang['VALUE']."'";
+     $DsL=$SQL->Select($Query);
+      if(!empty($DsL))$Data['text_'.$Key] = TextFromDBForm($DsL[0]['text']);
+     }
+   
+    $Data['is_id'] = $Ds[0]['is_id'];
+    $Data['is_href'] = $Ds[0]['is_href'];
+    $Data['is_permission'] = $Ds[0]['is_permission'];
+    $Data['type'] = $Ds[0]['type'];
+    $Data['show_menu'] = $Ds[0]['show_menu'];
+    $Data['show_menu_adm'] = $Ds[0]['show_menu_adm'];
+    $Data['link_sub_id'] = $Ds[0]['link_subid'];
+    $Data['onclick'] = $Ds[0]['onclick'];
+    }
+   }
+  $tmpOut = '
+  <form name="netActionForm" action="" method="POST">
+  <table class="width100p">
+  <tr>
+  <td>'.tr('STR_TEXT').'</td>
+  <td><input type="text" name="Text" value="'.$Data['text'].'" class="Design" size="30"></td>
+  </tr>
+  ';
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){
+   $tmpOut .= '
+   <tr>
+   <td>'.tr('STR_TEXT').' ['.$Lang['lang_long'].']</td>
+   <td>
+   <input type="text" name="Text_'.$Key.'" value="'.$Data['text_'.$Key].'" class="Design" size="30">
+   <input type="hidden" name="LangID_'.$Key.'" value="'.$Lang['VALUE'].'">
+   </td>
+   </tr>   
+   ';
+  } 
+  $tmpOut .= '
+  <tr>
+  <td>'.tr('STR_MENU_NODE_MODE').'</td>
+  <td><input type="radio" name="IsID" value="1"'.CheckRadio('1',$Data['is_id']).'/> '.tr('STR_MENU_NODE_MODE_1').' <input type=radio name="IsID" value="0"'.CheckRadio('0',$Data['is_id']).'/>'.tr('STR_MENU_NODE_MODE_0').'</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_MENU_NODE_TYPE').'</td>
+  <td><select class="Design" name="Type">
+  <option value=""><!----></option>
+  <option value="0"'.CheckSelect('0',$Data['type']).'>'.tr('STR_MENU_NODE_TYPE_0',0).'</option>
+  <option value="1"'.CheckSelect('1',$Data['type']).'>'.tr('STR_MENU_NODE_TYPE_1',0).'</option>
+  </select>
+  </td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_QUESTION_SHOW_IN_MAIN_MENU').'</td>
+  <td><input type="radio" name="ShowMenu" value="1"'.CheckRadio('1',$Data['show_menu']).'/> '.tr('STR_YES').' <input type="radio" name="ShowMenu" value="0"'.CheckRadio('0',$Data['show_menu']).'/>'.tr('STR_NO').'</td>
+  </tr>  
+  <tr>
+  <td>'.tr('STR_QUESTION_SHOW_IN_ADMINISTRATOR_MENU').'</td>
+  <td><input type="radio" name="ShowMenuAdm" value="1"'.CheckRadio('1',$Data['show_menu_adm']).'/> '.tr('STR_YES').' <input type="radio" name="ShowMenuAdm" value="0"'.CheckRadio('0',$Data['show_menu_adm']).'/>'.tr('STR_NO').'</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_QUESTION_IS_PERMISSION').'</td>
+  <td><input type="radio" name="IsPermission" value="1"'.CheckRadio('1',$Data['is_permission']).'/> '.tr('STR_YES').' <input type="radio" name="IsPermission" value="0"'.CheckRadio('0',$Data['is_permission']).'/>'.tr('STR_NO').'</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_QUESTION_ATTACH_TO_SECTION').'</td>
+  <td><select name="LinkSubId" class="Design" onChange="if(this.value==\'noID\'){alert(\''.tr('MSG_UNABLE_TO_ATTACH_TO_SECTION',false).'\');this.value=\'\';return false;}">
+  <option value="">
+  ';
+   for($i=0;$i<sizeof($MenuArr);$i++){
+   list($MenuText,$MenuID) = explode(":||:",$MenuArr[$i]);
+   $tmpOut .= '<option value="'.$MenuID.'"'.CheckSelect($MenuID,$Data['link_sub_id']).'>'.$MenuText."</option>\n";
+   } 
+  $tmpOut .= '
+  </select>
+  </td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_LINK').'</td>
+  <td><input type="text" name="IsHref" value="'.$Data['is_href'].'" class="Design" size="30"/></td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_ONCLICK').'</td>
+  <td><input type="text" name="onClick" value="'.$Data['onclick'].'" class="Design" size="30"/></td>
+  </tr>
+  </table>
+  </form>
+  ';
+
+  $Out['dialog']['text'] = $tmpOut;
+  $Out['dialog']['title'] = $Data['dialog_title'];
+  }
+ 
+ 
+ //-----------------------------------------------------------------------------------
+//DIALOG: move node in menu
+//----------------------------------------------------------------------------------- 
+ if($action == 'dialogMoveNode'){
+ $Data = array(
+ 'node_id' => (int)$_REQUEST['NodeID'],
+ 'dialog_title' => tr('TITLE_NODE_MOVE',0)
+ );
+ 
+  $current_section = $dbtree->GetNodeInfo($Data['node_id']);
+  $dbtree->Parents($Data['node_id'], array('section_id'), array('and' => array('section_level = ' . ($current_section[2] - 1))));
+  $item = $dbtree->NextRow();
+  $dbtree->Branch($item['section_id'], array('section_id', 'display_text'), array('and' => array('section_level = ' . $current_section[2])));
+  
+  $tmpOut = '
+  <form action="" method="POST" name="netActionForm">
+  <table class="width100p">
+  <tr>
+  <td>'.tr('STR_NODE_SELECTED').'</td>
+  <td>'.netViewNode($Data['node_id']).'</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="bold">'.tr('STR_OPTION').' 1: '.tr('STR_NODE_MOVE_IN_SELECTED_LEVEL').'</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_NODE_POSITION').'</td>
+  <td><select name="Position" class="Design">
+  <option value="">
+  <option value="after">'.tr('STR_AFTER').'</option>
+  <option value="before">'.tr('STR_BEFORE').'</option>
+  </select>
+  </td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_NODE_BASE').'</td>
+  <td><select name="NodeIDv1" class="Design">
+  <option value="">
+  ';
+   while ($item = $dbtree->NextRow()) {
+   $tmpOut .= '<option value="'.$item['section_id'].'">'.netViewNode($item['section_id']).(($item['section_id'] == $Data['node_id']) ? '<<<' : '').'</option>';
+   }
+  $tmpOut .= '
+  </select>
+  </td>
+  </tr>
+  <tr>
+  <td colspan="2" class="bold">'.tr('STR_OPTION').' 2: '.tr('STR_NODE_ASSIGN_TO_ANOTHER_ITEM').'</td>
+  </tr>
+  <tr>
+  <td>'.tr('STR_NODE_SELECT_ITEM').'</td>
+  <td><select name="NodeIDv2" class="Design"><option value="">
+  ';
+  $dbtree->Full(array('section_id', 'section_level', 'display_text'), array('or' => array('section_left <= ' . $current_section[0], 'section_right >= ' . $current_section[1])));
+   while ($item = $dbtree->NextRow()) {
+   $tmpOut .= '<option value="'.$item['section_id'].'">'.str_repeat('&nbsp;', 6 * $item['section_level']).netViewNode($item['section_id']).(($item['section_id'] == $Data['node_id']) ? '<<<' : '').'</option>';
+   }
+  $tmpOut.= '
+  </select>
+  </td>
+  </tr>
+  </table>
+  </form>
+  ';
+ $Out['dialog']['text'] = $tmpOut;  
+ $Out['dialog']['title'] = $Data['dialog_title'];  
+ }
+ 
+?>

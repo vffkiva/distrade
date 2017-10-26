@@ -1,0 +1,53 @@
+<?php
+
+//-----------------------------------------------------------------------------------
+//Action: login
+//----------------------------------------------------------------------------------- 
+ if($action == 'login'){
+ $Data = array(
+ 'username' => TextToDB($_REQUEST['username']),
+ 'password' => TextToDB($_REQUEST['password']),
+ 'exceptions' => array()
+ );
+ 
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+  
+  if($Error == ''){
+  $Query = "
+  SELECT t1.*,t2.block_status 
+  FROM ".$MYVAR['MYSQL']['PREFIX']."users_list AS t1 
+  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."users_types AS t2 ON t1.type_id=t2.id 
+  WHERE t1.username LIKE '".$Data['username']."' AND t1.password LIKE '".md5($Data['password'])."' AND t1.block_status=0 AND t2.block_status=0
+  ";
+  $Ds=$SQL->Select($Query);
+   if(empty($Ds))$Error = tr('MSG_ERROR_USER_NOT_FOUND');
+  }
+  
+  if($Error == ''){
+  WriteToSession('UserID',$Ds[0]['id']);
+   if($Ds[0]['start_subid']!='' && $Ds[0]['start_subid']!=0)$Out['redirect'] = '?SubId='.$Ds[0]['start_subid'];
+   else $Out['redirect'] = '?Section=first_page';
+  }
+  else $Out['message'] = array_merge($Out['message'], array('type' => 'error', 'text' => $Error, 'mode' => 'prompt'));
+ }
+
+
+//-----------------------------------------------------------------------------------
+//Action: logout
+//-----------------------------------------------------------------------------------  
+ if($action == 'logout'){
+ $Data = array(
+ 'redirect' => $MYVAR['HTTP']
+ ); 
+ unsetSession();
+ $_SESSION['message'] = json_encode(array('text' => tr('MSG_LOGOUT_COMPLETE'), 'mode' => 'plain', 'type' => 'info'));
+ $Out['redirect'] = $Data['redirect'];
+ }
+?>

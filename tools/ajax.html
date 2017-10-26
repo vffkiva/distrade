@@ -1,0 +1,44 @@
+<?php
+require $_SERVER["DOCUMENT_ROOT"].'/.inc/.inc_functions.html';
+
+
+ if($MYVAR['IS_AJAX'] == 0){
+ echo 'This is not ajax call';
+ exit;
+ }
+
+$Error = '';
+$tmpOut = '';
+
+$Out = array(
+	'html' => '',
+	'dialog' => array(
+		'title' => tr('STR_DIALOG_TITLE',0), 
+		'text' => tr('STR_DIALOG_TEXT')
+		),
+	'message' => array(
+		'type' => 'info',
+		'text' => ''
+		),
+	'error_fields' => array(),
+	'redirect' => ((isset($_REQUEST['redirect']) && $_REQUEST['redirect'] != '') ? $_REQUEST['redirect'] : '')
+	);
+
+
+ if(isset($_REQUEST['action']) && $_REQUEST['action'] != ''){
+ $action = $_REQUEST['action'];
+
+  if(in_array($action, array('dialogUserLogin'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/dialogs.html';
+  }
+
+  if(in_array($action, array('actionGetGalleryPics', 'actionGetNews', 'actionUserLogin', 'actionUserLogout', 'actionGetProducts', 'actionGetTags', 'actionGetOneProduct'))){
+  require_once $MYVAR['ROOT'].'tools/ajax/actions.html';
+  }
+
+ }
+
+
+header('Content-type: application/json');
+echo json_encode($Out);
+?>

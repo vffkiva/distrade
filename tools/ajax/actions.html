@@ -1,0 +1,545 @@
+<?php
+//-----------------------------------------------------------------------------------
+//ACTION: get gallery pictures
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionGetGalleryPics'){
+ $Data = array(
+ 'gallery_id' => (isset($_REQUEST['GalleryID']) && $_REQUEST['GalleryID'] != '') ? $_REQUEST['GalleryID'] : '',
+ 'product_id' => (isset($_REQUEST['ProductID']) && $_REQUEST['ProductID'] != '') ? $_REQUEST['ProductID'] : '',
+ 'show_button' => false,
+ 'preview_width' => 111,
+ 'preview_height' => 81,
+ 'preview_count' => 10,
+ 'type' => 'gallery',
+ 'description' => '',
+ 'if' => ''
+ );
+ 
+  if($Data['product_id'] != '') $Data['type'] = 'product';
+ 
+  if($Data['type'] == 'gallery'){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."gallery WHERE gallery_id=".(int)$Data['gallery_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+    if($Ds[0]['description']!='') $Data['description'] = TextFromDB($Ds[0]['description']);
+    $Data['preview_count'] = $Ds[0]['preview_count'];
+    if((int)$Ds[0]['preview_width'] != 0)(int)$Ds[0]['preview_width'];
+    if((int)$Ds[0]['preview_height'] != 0)(int)$Ds[0]['preview_height'];
+   }	
+  $Data['if'] = " t1.module='gallery' AND t1.module_id=".(int)$Data['gallery_id'];
+  }
+  
+  if($Data['type'] == 'product'){
+  
+  $Data['if'] = " t1.module='product' AND t1.module_id=".(int)$Data['product_id'];
+  }
+  
+  $tmpOut  = '
+  <table style="width:100%;"><tr><td class="gallery-description">'.$Data['description'].'</td></tr><tr><td>
+  ';
+  $Query = "
+  SELECT t2.title,t2.text,t1.picture FROM ".$MYVAR['MYSQL']['PREFIX']."pictures AS t1 
+  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."picture_text AS t2 ON t1.id=t2.picture_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+  WHERE ".$Data['if']
+  ;
+  $Ds=$SQL->Select($Query);
+   if(empty($Ds))$tmpOut .= 'no images';
+   else {
+    foreach($Ds AS $Key => $Value){
+    $Class = '';
+     
+     if(is_numeric($Data['preview_count']) && $Data['preview_count'] > 0 && $Key >= $Data['preview_count']){
+     $Class = ' hidden-object';
+     $Data['show_button'] = true;
+     }
+	$Text = '';
+	 if($Value['title'] != '') $Text = TextFromDB($Value['title']);
+	 if($Value['text'] != '') $Text = ($Text != '') ? $Text.'<br/>'.TextFromDB($Value['text']) : TextFromDB($Value['text']);
+	
+	$tmpOut .= '
+    <div class="gallery-picture'.$Class.'" style="width:'.$Data['preview_width'].'px; height:'.$Data['preview_height'].'px;">
+     <div class="gallery-picture-image" style="width:'.$Data['preview_width'].'px; height:'.$Data['preview_height'].'px;">
+     <a title="'.$Text.'" href="'.$Value['picture'].'" rel="group1"><img src="/tools/thumb.html?src='.$Value['picture'].'&width='.$Data['preview_width'].'&height='.$Data['preview_height'].'" width="'.$Data['preview_width'].'" height="'.$Data['preview_height'].'"></a>
+     </div>
+    </div>
+    ';
+    }
+     
+   if($Data['show_button'])$tmpOut .= '<span style="width:100%;text-align:right;" class="main-href align-right">'.tr('STR_SHOW_ALL').'</span>';
+   }
+  $tmpOut .= '</td></tr></table>';
+  
+ $Out['html'] = $tmpOut;
+ $Out['data'] = $Data;
+ }
+ 
+
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: get news
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionGetNews'){
+ $Data = array(
+ 'limit' => (isset($_REQUEST['limit']) && $_REQUEST['limit'] != '') ? $_REQUEST['limit'] : '',
+ 'offset' => (isset($_REQUEST['offset']) && $_REQUEST['offset'] != '') ? $_REQUEST['offset'] : '',
+ 'total' => 0,
+ 'next' => 0,
+ 'news' => array()
+ );
+ 
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE block_status=0 AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY date DESC, id DESC LIMIT ".$Data['offset'].",".$Data['limit'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $Data['total'] = count($Ds);
+  
+   foreach($Ds as $Key => $Value){
+   $Text = $Value['description'];
+    if($Text == '') $Text = $Value['text'];
+	if(iconv_strlen(strip_tags($Text),'UTF-8') > 400) $Text = iconv_substr(strip_tags($Text),0,400,'UTF-8').'...'; 
+	
+   $Data['news'][] = '<div class="one-news">
+      <div class="title"><span class="date">'.myDate($Value['date']).'</span> <span class="text">'.TextFromDB($Value['title']).'</span></div>
+      <div class="text">'.$Text.'</div> 
+      <div class="navigation">'.myButton(array('text' => tr('BTTN_DETAILS'),'onclick' => 'window.location=\'?_news='.$Value['news_id'].'\';')).'</div>
+	 </div>';
+   }
+  
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE block_status=0 AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY date DESC, id DESC LIMIT ".($Data['offset']+$Data['limit']).",".$Data['limit'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds))$Data['next'] = count($Ds);
+  }
+ $Out['news'] = $Data['news'];
+ $Out['next'] = $Data['next'];
+ }
+ 
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: user login
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionUserLogin'){
+ $Data = array(
+ 'email' => (isset($_REQUEST['email']) && $_REQUEST['email'] != '') ? $_REQUEST['email'] : '',
+ 'password' => (isset($_REQUEST['password']) && $_REQUEST['password'] != '') ? $_REQUEST['password'] : '',
+ 'exceptions' => array()
+ );
+ 
+  if($Error == ''){
+  foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+  if($Error == ''){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_list WHERE e_mail LIKE '".$Data['email']."' AND password LIKE '".md5($Data['password'])."'";
+  $Ds=$SQL->Select($Query);
+   if(empty($Ds)){$Error = tr('MSG_ERROR_USER_NOT_FOUND');$Out['error_fields'] = array('email','password');}
+   if($Error == '' && (int)$Ds[0]['block_status'] == 1){$Error = tr('MSG_ERROR_USER_IS_BLOCKED');$Out['error_fields'][] = 'email';}
+  }
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error, 'container' => '#login-message');
+  else {
+  WriteToSession('UserID',$Ds[0]['id']);
+  }
+ }
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: user logout
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionUserLogout'){ 
+ UnsetSession(array('Lang'));
+ }
+
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: get products
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionGetProducts'){
+ $Data = array(
+ 'country' => (isset($_REQUEST['Country']) && $_REQUEST['Country'] != '') ? $_REQUEST['Country'] : '',
+ 'manufacturer_id' => (isset($_REQUEST['Manufacturer']) && $_REQUEST['Manufacturer'] != '') ? $_REQUEST['Manufacturer'] : '',
+ 'type' => (isset($_REQUEST['Type']) && $_REQUEST['Type'] != '') ? $_REQUEST['Type'] : '',
+ 'horeca' => (isset($_REQUEST['Horeca']) && $_REQUEST['Horeca'] != '') ? $_REQUEST['Horeca'] : '',
+ 'tags' => (isset($_REQUEST['Tags']) && $_REQUEST['Tags'] != '') ? $_REQUEST['Tags'] : '',
+ 'products' => array('html' => '', 'total' => 0, 'per_page' => 20, 'pager' => ''),
+ 'all_products' => array(),
+ 'products_filter' => array(),
+ 'exceptions' => array()
+ );
+
+
+$Filter = array(
+ 'text' => '',
+ 'query' => '',
+ 'if' => ''
+);
+
+
+ if($Data['country'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t2.country LIKE '".$Data['country']."'":" t2.country LIKE '".$Data['country']."'";
+ if($Data['manufacturer_id'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t2.manufacturer_id=".(int)$Data['manufacturer_id']:" t2.manufacturer_id=".(int)$Data['manufacturer_id'];
+ if($Data['type'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.type LIKE '".$Data['type']."'":" t1.type LIKE '".$Data['type']."'";
+ if($Data['horeca'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.horeca=1":" t1.horeca=1";
+ 
+ if($Data['tags'] != ''){
+ $Tmp = explode(',',$Data['tags']);
+ $Str = array(); 
+  foreach($Tmp as $Key => $Value)$Str[] = "FIND_IN_SET('".$Value."',tags)>0";
+ $Str = '('.implode(' AND ',$Str).')';
+ 
+ $Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND ".$Str : $Str;
+ }
+ 
+ 
+  $Fields = array();
+  $Values = array();
+   foreach ($Data AS $Key => $Value) {
+    if($Value!='' && in_array($Key, array('country', 'manufacturer_id', 'type', 'horeca', 'tags'))){
+    $Fields[] = $Key;
+    $Values[] = $Value;
+    }
+   }
+   
+   if(sizeof($Fields) > 0){
+    if(!isset($_SESSION['search']))$_SESSION['search'] = array();
+	if(!isset($_SESSION['search']['products']))$_SESSION['search']['products'] = array();
+    $_SESSION['search']['products'] = array('fields' => json_encode($Fields), 'values' => json_encode($Values));
+   }
+ 
+ 
+$Filter['if'] = ($Filter['query']!='')?" AND ".$Filter['query']:""; 
+
+
+ $Query = "
+ SELECT t1.id, t1.product_id, t2.name AS manufacturer, t2.country, LOWER(t2.country_iso) AS flag, t1.product, t1.netto, t1.items_per_box, t1.box_per_palete  FROM ".$MYVAR['MYSQL']['PREFIX']."products AS t1 
+ LEFT JOIN db_manufacturers AS t2 ON t1.manufacturer_id=t2.manufacturer_id AND t1.lang_id=t2.lang_id 
+ WHERE t1.block_status=0 AND t1.lang_id=".(int)$MYVAR['LANG_ID'].$Filter['if']." 
+ ORDER BY t2.name, t1.type, t1.product, t1.netto 
+ ";
+//echo $Query;
+ $Ds=$SQL->Select($Query);
+ 
+  if(!empty($Ds)){
+  $Data['products']['total'] = count($Ds);
+  $tmpOut = '
+  
+  <table>
+  <tr>
+  <td class="bold">'.tr('STR_COUNTRY').'</td>
+  <td class="bold text-center">'.tr('STR_IMAGE').'</td>
+  <td class="bold">'.tr('STR_MANUFACTURER').'</td>
+  <td class="bold text-left">'.tr('STR_PRODUCT_NAME').'</td>
+  <td class="bold text-right">'.tr('STR_WEIGHT_NETTO').'</td>
+  <td class="bold text-right">'.tr('STR_PACKS_PER_BOX').'</td>
+  <td class="bold text-right">'.tr('STR_PACKS_PER_PALETE').'</td>
+  </tr>
+  ';
+  $RowNr = 0;
+   foreach($Ds as $Key => $Value){
+   $Data['all_products'][] = $Value['product_id'];
+   
+   $Flag = $Picture = '';
+    if(@file_exists($MYVAR['ROOT'].'img/flags/'.$Value['flag'].'.png')) $Flag = '<img src="/img/flags/'.$Value['flag'].'.png"/>';
+   
+   $Query = "SELECT t1.picture FROM ".$MYVAR['MYSQL']['PREFIX']."pictures AS t1 WHERE module LIKE 'product' AND module_id=".(int)$Value['product_id']." ORDER BY t1.id LIMIT 1";
+   //echo $Query;
+   $DsP=$SQL->Select($Query);
+    if(!empty($DsP) && @file_exists($MYVAR['ROOT'].$DsP[0]['picture'])){
+	//$Picture = '<img class="product-image" src="/tools/thumb.html?src='.$DsP[0]['picture'].'&width=30&height=30" width="30" height="30" style="border:1px solid rgb(200,200,200);"/> ';
+	$Picture = '<img class="product-image" src="/tools/thumb.html?src='.$DsP[0]['picture'].'&width=30&height=30" style="border:1px solid rgb(200,200,200);"/> ';
+	}
+	
+   $RowNr++;
+   $Class = ($RowNr > $Data['products']['per_page']) ? ' class="hidden-object"' : '';
+
+	$tmpOut .= '
+   <tr id="id-channelRow_'.$RowNr.'"'.$Class.'>
+   <td>'.$Flag.'<span class="hidden-object">'.$Value['product_id'].'</span></td>
+   <td class="text-center">'.$Picture.'</td>
+   <td>'.TextFromDB($Value['manufacturer']).'</td>
+   <td class="text-left">'.TextFromDB($Value['product']).'</td>
+   <td class="text-right">'.$Value['netto'].'</td>
+   <td class="text-right">'.$Value['items_per_box'].'</td>
+   <td class="text-right">'.$Value['box_per_palete'].'</td>
+   </tr>
+   ';
+   }
+  $tmpOut .= '</table>';
+
+  $Pages = ceil($Data['products']['total']/$Data['products']['per_page']);
+  $Data['products']['pager'] = '
+  <div class="channels-pages""> 
+  ';
+   for($i = 1; $i <= $Pages; $i++){
+   $Class = '';
+    if($i == 1)$Class = ' selected';
+   $Data['products']['pager'] .= '<span class="page-number'.$Class.'">'.$i.'</span>';
+   }
+  $Data['products']['pager'] .= '
+  </div>
+  ';
+  }
+
+WriteToSession('products', json_encode($Data['all_products']));
+ $Data['products']['html'] = $tmpOut;
+ $Out['products'] = $Data['products'];
+ }
+
+
+//-------------------------------------------------------------------------------
+//ACTION: get tags
+//-------------------------------------------------------------------------------
+ if($action == 'actionGetTags'){
+ $Data = array(
+ 'search' => (isset($_REQUEST['Search']) && $_REQUEST['Search'] != '') ? $_REQUEST['Search'] : '',
+ 'results' => array(),
+ 'tags' => array()
+ );
+ 
+ $Query = "SELECT id,tags FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE tags LIKE '%".$Data['search']."%'";
+ $Ds=$SQL->Select($Query);
+ 
+  if(!empty($Ds)){
+   foreach($Ds as $Key => $Value){
+   $Query = "SELECT tags FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE id=".(int)$Value['id'];
+   $DsP=$SQL->Select($Query);
+    if(!empty($DsP)){
+	$Tmp = explode(',',$DsP[0]['tags']);
+	 foreach($Tmp as $SubKey => $SubValue){
+	 if(strpos($SubValue, $Data['search']) !== false && !in_array($SubValue,$Data['results']))$Data['results'][] = $SubValue;
+	 }
+	}
+   }
+  }
+
+ foreach($Data['results'] as $SubKey => $SubValue)$Data['tags'][] = array('label' => $SubValue, 'value' => $SubValue);
+  
+ $Out['results'] = $Data['tags'];
+ }
+ 
+//-------------------------------------------------------------------------------
+//ACTION: get one product
+//-------------------------------------------------------------------------------
+ if($action == 'actionGetOneProduct'){
+ $Data = array(
+ 'product_id' => (isset($_REQUEST['product_id']) && $_REQUEST['product_id'] != '') ? $_REQUEST['product_id'] : '',
+ 'products' => (isset($_SESSION['products']) && $_SESSION['products'] != '') ? json_decode($_SESSION['products'], true) : array(),
+ 'left' => '',
+ 'right' => '',
+
+ 'article' => '',
+ 'manufacturer' => '',
+ 'country' => '',
+ 'product' => '',
+ 'packaging' => '',
+ 'netto' => '',
+ 'allergens' => '',
+ 'best_before' => '',
+ 'items_per_box' => '',
+ 'box_netto' => '',
+ 'box_brutto' => '',
+ 'box_per_palete' => '',
+ 'box_per_layer' => '',
+ 'total_layers' => '',
+ 'palete_height' => '',
+ 'composition' => '',
+ 'item_length' => '',
+ 'item_width' => '',
+ 'item_height' => '',
+ 'box_length' => '',
+ 'box_width' => '',
+ 'box_height' => '',
+ 'code_item' => '',
+ 'code_box' => '',
+ 'title' => '',
+ 'text' => '',
+ 'picture' => ''
+ );
+
+ foreach($Data['products'] as $Key => $Value){
+  if((int)$Value == (int)$Data['product_id']){
+   if($Key > 0)$Data['left'] = $Data['products'][$Key-1];
+   if($Key < (count($Data['products'])-1))$Data['right'] = $Data['products'][$Key+1];
+  break;
+  }
+ }
+
+
+ $Query = "
+SELECT t1.*,t2.name AS manufacturer, t2.country 
+FROM ".$MYVAR['MYSQL']['PREFIX']."products AS t1
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."manufacturers AS t2 ON t1.manufacturer_id=t2.manufacturer_id AND t2.lang_id=t1.lang_id 
+WHERE t1.product_id=".(int)$Data['product_id']." AND t1.lang_id=".(int)$MYVAR['LANG_ID'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $Data['article'] = $Ds[0]['article'];
+  $Data['manufacturer'] = strhtml($Ds[0]['manufacturer']);
+  $Data['country'] = strhtml($Ds[0]['country']);
+  $Data['product'] = strhtml($Ds[0]['product']);
+  $Data['packaging'] = tr('STR_PACKAGING_'.strtoupper($Ds[0]['packaging']),0);
+  $Data['netto'] = $Ds[0]['netto'];
+  $Data['allergens'] = strhtml($Ds[0]['allergens']);
+  $Data['best_before'] = $Ds[0]['best_before'];
+  $Data['items_per_box'] = $Ds[0]['items_per_box'];
+  $Data['box_netto'] = $Ds[0]['netto_box'];
+  $Data['box_brutto'] = $Ds[0]['brutto_box'];
+  $Data['box_per_palete'] = $Ds[0]['box_per_palete'];
+  $Data['box_per_layer'] = $Ds[0]['box_per_layer'];
+  $Data['total_layers'] = $Ds[0]['total_layers'];
+  $Data['palete_height'] = $Ds[0]['palete_height'];
+  $Data['composition'] = strhtml($Ds[0]['composition']);
+  $Data['item_length'] = (int)$Ds[0]['item_length'];
+  $Data['item_width'] = (int)$Ds[0]['item_width'];
+  $Data['item_height'] = (int)$Ds[0]['item_height'];
+  $Data['box_length'] = (int)$Ds[0]['box_length'];
+  $Data['box_width'] = (int)$Ds[0]['box_width'];
+  $Data['box_height'] = (int)$Ds[0]['box_height'];
+  $Data['code_item'] = $Ds[0]['code_item'];
+  $Data['code_box'] = $Ds[0]['code_box'];
+  $Data['title'] = stripslashes($Ds[0]['product']);
+  $Data['text'] = stripslashes($Ds[0]['description']);
+
+  $Query = "SELECT t1.picture FROM ".$MYVAR['MYSQL']['PREFIX']."pictures AS t1 WHERE module LIKE 'product' AND module_id=".(int)$Data['product_id']." ORDER BY t1.id LIMIT 1";
+  $DsP=$SQL->Select($Query);
+   if(!empty($DsP) && @file_exists($MYVAR['ROOT'].$DsP[0]['picture'])){
+   //$Data['picture'] = '/tools/thumb.html?src='.$DsP[0]['picture'].'&width=200&height=300';
+   $Data['picture'] = $DsP[0]['picture'];
+   }
+  }
+ 
+//$Picture = '<img src="/tools/thumb.html?src='.$DsP[0]['picture'].'&width=30&height=30" width="30" height="30" style="border:1px solid rgb(200,200,200);"/> ';
+//<img width="200" height="300" src="/tools/thumb.html?src='.$Data['picture'].'&width=200&height=300">
+ $tmpOut .= '
+ <div class="main-section-cell">
+  <div class="main-section">
+ 
+ <table class="product-item">
+ <tr>
+ <td class="title nowrap border-bottom">'.tr('STR_ARTICLE',0).'</td>
+ <td class="border-bottom" colspan="5">'.$Data['article'].'</td>
+ </tr>
+
+ <tr>
+ <td>&nbsp;</td>
+ <td style="width:200px;">&nbsp;</td>
+ <td>&nbsp;</td>
+ <td>&nbsp;</td>
+ <td>&nbsp;</td>
+ <td>&nbsp;</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_MANUFACTURER',0).'</td>
+ <td class="text-center">'.$Data['manufacturer'].'</td>
+ <td class="title" colspan="3">'.tr('STR_COMPOSITION',0).'</td>
+ <td class="text-center" rowspan="15" style="padding:0;">
+ <div class="image">'.(($Data['picture'] != '') ? '
+ <a rel="group1" href="'.$Data['picture'].'" title="">
+ <img src="/tools/thumb.html?src='.$Data['picture'].'&width=200&height=300">
+ </a>
+ ' : '').'
+ </div>
+ </td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_COUNTRY_ORIGIN',0).'</td>
+ <td class="text-center">'.$Data['country'].'</td>
+ <td class="text-top" rowspan="6" colspan="3">'.$Data['composition'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_PRODUCT',0).'</td>
+ <td class="text-center">'.$Data['product'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_PACKAGING',0).'</td>
+ <td class="text-center">'.$Data['packaging'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_WEIGHT_NETTO',0).'</td>
+ <td class="text-center">'.$Data['netto'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_ALLERGENS',0).'</td>
+ <td class="text-center">'.$Data['allergens'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_BEST_BEFORE',0).'</td>
+ <td class="text-center">'.$Data['best_before'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap border-bottom" colspan="5" style="padding-top:10px;">'.tr('STR_LOGISTIC_DATA',0).'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_ITEMS_PER_BOX',0).'</td>
+ <td class="text-center">'.$Data['items_per_box'].'</td>
+ <td class="title">'.tr('STR_ITEM_LENGTH',0).'</td>
+ <td class="text-center">'.$Data['item_length'].'</td>
+ <td class="title text-center">'.tr('STR_CODE_ITEM',0).'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_BOX_WEIGHT_NETTO',0).'</td>
+ <td class="text-center">'.$Data['box_netto'].'</td>
+ <td class="title">'.tr('STR_ITEM_WIDTH',0).'</td>
+ <td class="text-center">'.$Data['item_width'].'</td>
+ <td class="text-center">'.$Data['code_item'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_BOX_WEIGHT_BRUTTO',0).'</td>
+ <td class="text-center">'.$Data['box_brutto'].'</td>
+ <td class="title">'.tr('STR_ITEM_HEIGHT',0).'</td>
+ <td class="text-center">'.$Data['item_height'].'</td>
+ <td></td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_PACKS_PER_PALETE',0).'</td>
+ <td class="text-center">'.$Data['box_per_palete'].'</td>
+ <td></td>
+ <td></td>
+ <td></td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_BOX_PER_LAYER',0).'</td>
+ <td class="text-center">'.$Data['box_per_layer'].'</td>
+ <td class="title">'.tr('STR_BOX_LENGTH',0).'</td>
+ <td class="text-center">'.$Data['box_length'].'</td>
+ <td class="title text-center">'.tr('STR_CODE_BOX',0).'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_TOTAL_LAYERS',0).'</td>
+ <td class="text-center">'.$Data['total_layers'].'</td>
+ <td class="title">'.tr('STR_BOX_WIDTH',0).'</td>
+ <td class="text-center">'.$Data['box_width'].'</td>
+ <td class="text-center">'.$Data['code_box'].'</td>
+ </tr>
+ 
+ <tr>
+ <td class="title nowrap">'.tr('STR_PALETE_HEIGHT',0).'</td>
+ <td class="text-center">'.$Data['palete_height'].'</td>
+ <td class="title">'.tr('STR_BOX_HEIGHT',0).'</td>
+ <td class="text-center">'.$Data['box_height'].'</td>
+ <td></td>
+ </tr>
+ 
+ <tr>
+ <td colspan="6" class="border-bottom">&nbsp;</td>
+ </tr>
+ </table>
+';
+
+  if($Data['left'] != '') $Data['left'] = '<span pid="'.$Data['left'].'" class="link">&lt;</span></div>';
+  if($Data['right'] != '') $Data['right'] = '<span pid="'.$Data['right'].'" class="link">&gt;</span></div>';
+ $Out['product'] = array('html' => $tmpOut, 'left' => $Data['left'], 'right' => $Data['right']);
+ }
+?>

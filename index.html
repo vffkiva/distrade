@@ -1,0 +1,138 @@
+<?php
+require $_SERVER['DOCUMENT_ROOT'].'/.inc/.inc_header.html';
+
+
+// ss
+
+$Modules = array('TOP' => array(), 'CENTER' => array(), 'BOTTOM' => array());
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY position, nr";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+  foreach($Ds as $Key => $Value){
+   if(!isset($Modules[$Value['position']]))$Modules[$Value['position']] = array();
+  $Nr = count($Modules[$Value['position']]);
+  $Modules[$Value['position']][$Nr] = $Value;
+  $Modules[$Value['position']][$Nr]['params'] = json_decode($Value['module_params'],true);
+  }
+ } 
+
+//printr($Modules);
+//<div class="logo"><!----></div>
+echo'
+<div id="container">
+ <div id="top">
+
+ <div class="center">
+  
+
+   <div><a href="'.$MYVAR['HTTP'].'"><img src="/img/logo3.png" width="328" height="71"/></a></div>
+   
+   <div class="login">'.(($MYVAR['USER']['LOGGED'] == 0) ? 
+   '<a class="main-href" href="javascript:void(0);" onClick="dialogUserLogin({\'redirect\' : \''.$MYVAR['HTTP'].'\'});">'.tr('STR_LINK_LOGIN').'</a>' : 
+   '<span class="styled-text">'.tr('STR_LOGIN_WELCOME_STRING').' '.$SQL->GetSQLData($MYVAR['USER']['ID'],'id',$MYVAR['MYSQL']['PREFIX'].'users_list','name').'</span>  
+   <a class="main-href" href="javascript:void(0);" onClick="actionUserLogout({\'redirect\' : \''.$MYVAR['HTTP'].'\'});">('.tr('STR_LINK_LOGOUT').')</a>.'
+   ).'
+   </div>
+   <div class="phone">'.tr('STR_DISTRADE_PHONE').'</div>
+  
+     <div id="language">
+     <ul>
+     <li>
+	 <span class="text">'.$MYVAR['LANG_LONG'].'</span>
+     <span class="icon"'.(($MYVAR['LANG_IMG'] != '') ? ' style="background: url('.$MYVAR['LANG_IMG'].') no-repeat center center;}"' : '').'><!----></span>
+	 
+     <ul>
+    ';
+     foreach($MYVAR['LANGS'] AS $Key => $Value){
+     if($Value['VALUE'] != $MYVAR['LANG_ID']){
+     $FlagStyle = ($Value['img'] != '') ? ' style="background: url('.$Value['img'].') no-repeat center center;}"' : '';
+     echo '
+     <li>
+     <div><!----></div>
+     <span class="language-link" onClick="window.location=\'?_lang='.$Value['lang_system'].'\';">
+	  <span class="text">'.$Value['lang_long'].'</span>
+	  <span class="icon"'.$FlagStyle.'><!----></span>
+	 </span>
+     </li>
+     ';
+     }
+    }
+   echo'
+   </ul></li></ul>
+   </div>
+  
+  </div>
+ </div>
+ 
+ <div id="menu">
+  <div class="center">
+   <div id="menu-items">'.showMenu($MYVAR['USER']['GROUP_ID']).'</div>
+  </div>
+ </div>
+';
+require_once $MYVAR['ROOT'].'.inc/index/.inc_banner.html';
+
+echo'
+  <div id="content">
+   <div class="center">
+';
+
+$Sec = 'start.html'; 
+ if($MYVAR['SUB_ID'] != ''){
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id=".(int)$MYVAR['SUB_ID'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+  $Sec = ($Ds[0]['type']==0)?'.inc_id_editor.html':'.inc_id_'.$MYVAR['SUB_ID'].'.html';
+   if(!userPermission($MYVAR['SUB_ID']))$Sec = 'authorize.html'; 
+   if(!@file_exists($MYVAR['SECTION'].$Sec))$Sec = 'not_found.html';
+  }
+  else{
+  $Sec = 'not_found.html';
+  }
+ }
+
+
+require_once $MYVAR['SECTION'].$Sec; 
+ 
+echo'
+   </div>
+  </div>
+';
+
+ if(count($Modules['BOTTOM']) > 0){
+ echo'
+ <div id="footer">
+   <div class="center">
+ ';
+ require_once $MYVAR['ROOT'].'.inc/index/.inc_bottom.html'; 
+ echo'
+   </div>
+  </div>
+ ';
+ }
+echo'  
+ </div>
+';
+?>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-48143574-1', 'distrade.ru');
+  ga('send', 'pageview');
+
+</script> 
+<?php
+echo'
+</body>
+</html>
+';
+
+
+
+
+
+?>

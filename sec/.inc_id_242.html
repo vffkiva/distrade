@@ -1,0 +1,19 @@
+<?php
+echo '
+<div class="hidden-object" id="id-newsListParams"><span class="limit">10</span><span class="offset">0</span></div>
+<div class="news-list"></div>
+<div class="news-list-more">'.myButton(array('text' => tr('BTTN_MORE_NEWS'), 'onclick' => 'actionGetNews({})')).'</div>
+
+
+';
+
+
+?>
+
+<script language="javascript" type="text/javascript">
+
+$(document).ready(function(){
+actionGetNews({});
+});
+
+</script>

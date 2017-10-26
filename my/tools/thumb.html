@@ -1,0 +1,19 @@
+<?php
+require $_SERVER['DOCUMENT_ROOT'].'/my/.inc/.inc_functions.html';
+
+ if($MYVAR['USER']['ID'] == ''){
+ echo tr('MSG_NOT_AUTHORIZED');
+ exit;
+ }
+
+
+
+
+$Data = array();
+$Data['ASS'] = $_REQUEST['ass'];
+$Data['SIZE'] = $_REQUEST['size'];
+$Data['SRC'] = $_REQUEST['src'];
+$Data['ROOT'] = $_SERVER['DOCUMENT_ROOT'];
+imageThumb($Data);
+
+?>

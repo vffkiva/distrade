@@ -1,0 +1,296 @@
+<?php
+
+//-----------------------------------------------------------------------------------
+//ACTION: add/update product
+//-----------------------------------------------------------------------------------
+ if($action == 'actionAddProduct'){
+ $Data = array(
+ 'manufacturer_id' => $_REQUEST['ManufacturerID'],
+ 'product_id' => $_REQUEST['ProductID'],
+ 'type' => $_REQUEST['Type'],
+ 'is_new' => (isset($_REQUEST['IsNew']) && $_REQUEST['IsNew'] != '') ? $_REQUEST['IsNew'] : 0,
+ 'horeca' => (isset($_REQUEST['Horeca']) && $_REQUEST['Horeca'] != '') ? $_REQUEST['Horeca'] : 0,
+ 'article' => $_REQUEST['Article'],
+ 'packaging' => $_REQUEST['Packaging'],
+ 'netto' => $_REQUEST['Netto'],
+ 'items_per_box' => $_REQUEST['ItemsPerBox'],
+ 'netto_box' => $_REQUEST['NettoBox'],
+ 'brutto_box' => $_REQUEST['BruttoBox'],
+ 'box_per_palete' => $_REQUEST['BoxPerPalete'],
+ 'customs_code' => $_REQUEST['CustomsCode'],
+ 'best_before' => $_REQUEST['BestBefore'],
+ 'code_item' => $_REQUEST['CodeItem'],
+ 'code_box' => $_REQUEST['CodeBox'],
+ 'item_length' => $_REQUEST['ItemLength'],
+ 'item_width' => $_REQUEST['ItemWidth'],
+ 'item_height' => $_REQUEST['ItemHeight'],
+ 'box_length' => $_REQUEST['BoxLength'],
+ 'box_width' => $_REQUEST['BoxWidth'],
+ 'box_height' => $_REQUEST['BoxHeight'],
+ 'box_per_layer' => $_REQUEST['BoxPerLayer'],
+ 'total_layers' => $_REQUEST['TotalLayers'],
+ 'palete_height' => $_REQUEST['PaleteHeight'],
+ 'block_status' => $_REQUEST['BlockStatus'],
+ 'notes' => TextToDB($_REQUEST['Notes']),
+ 'pictures' => array(),
+ 'total_pictures' => $_REQUEST['TotalPictures'],
+ 'tags' => $_REQUEST['Tags'],
+ 'mandatory' => array('manufacturer_id','block_status')
+ ); 
+
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Data['product_'.$Key] = TextToDB($_REQUEST['Product_'.$Key]);
+  $Data['description_'.$Key] = TextToDB($_REQUEST['Description_'.$Key]);
+  $Data['composition_'.$Key] = TextToDB($_REQUEST['Composition_'.$Key]);
+  $Data['allergens_'.$Key] = TextToDB($_REQUEST['Allergens_'.$Key]);
+  $Data['row_'.$Key] = $_REQUEST['RowID_'.$Key];
+  $Data['mandatory'][] = 'product_'.$Key;
+  }
+ 
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(in_array($Key,$Data['mandatory']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS',0);
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  } 
+
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  
+  if($Error == ''){
+   for($i=0;$i<$Data['total_pictures'];$i++){
+   $Data['pictures'][$i] = array('src' => $_REQUEST['Picture_'.$i.'_source'], 'info' => array());
+    foreach($MYVAR['LANGS'] as $Key => $Value){
+    $Title = $_REQUEST['Picture_'.$i.'_title_'.$Key];
+    $Text = $_REQUEST['Picture_'.$i.'_text_'.$Key];
+    $LangID = $_REQUEST['Picture_'.$i.'_lang_id_'.$Key];
+     if($Text != '' || $Title != '') $Data['pictures'][$i]['info'][] = array('title' => $Title, 'text' => $Text, 'lang_id' => $LangID);
+    }
+   }
+  
+  
+   if($Data['product_id'] == ''){
+   $Query = "SELECT MAX(product_id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."products";
+   $Ds=$SQL->Select($Query);
+    if(empty($Ds))$Data['product_id'] = 1;
+	else $Data['product_id'] = (int)$Ds[0]['id'] + 1;
+   }
+   
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){  
+	if($Data['row_'.$Key] == ''){
+	$Query = "
+    INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."products SET 
+	lang_id=".(int)$Lang['VALUE'].", 
+	manufacturer_id=".(int)$Data['manufacturer_id'].",
+	product_id=".(int)$Data['product_id'].",
+	type='".$Data['type']."',
+	is_new=".(int)$Data['is_new'].",
+	horeca=".(int)$Data['horeca'].",
+	product='".$Data['product_'.$Key]."', 
+	description='".$Data['description_'.$Key]."', 
+	composition='".$Data['composition_'.$Key]."',
+	allergens='".$Data['allergens_'.$Key]."',
+	article='".$Data['article']."',
+	packaging='".$Data['packaging']."',
+	netto='".$Data['netto']."',
+	items_per_box='".$Data['items_per_box']."',
+	netto_box='".$Data['netto_box']."',
+	brutto_box='".$Data['brutto_box']."',
+	box_per_palete='".$Data['box_per_palete']."',
+	customs_code='".$Data['customs_code']."',
+	best_before='".$Data['best_before']."',
+	code_item='".$Data['code_item']."',
+	code_box='".$Data['code_box']."',
+	item_length='".$Data['item_length']."',
+	item_width='".$Data['item_width']."',
+	item_height='".$Data['item_height']."',	
+	box_length='".$Data['box_length']."',
+	box_width='".$Data['box_width']."',
+	box_height='".$Data['box_height']."',
+    box_per_layer='".$Data['box_per_layer']."',
+	total_layers='".$Data['total_layers']."',
+	palete_height='".$Data['palete_height']."',
+	block_status=".(int)$Data['block_status'].",
+	notes='".$Data['notes']."',
+    tags='".$Data['tags']."',
+	create_user=".(int)$MYVAR['USER']['ID'].",
+	create_date=NOW() 
+    ";
+    $Ds=$SQL->Insert($Query);
+    }
+    else {
+/*
+    $Query = "
+    UPDATE ".$MYVAR['MYSQL']['PREFIX']."products SET is_new=".(int)$Data['is_new'].", manufacturer_id=".(int)$Data['manufacturer_id'].",product='".$Data['product_'.$Key]."', description='".$Data['description_'.$Key]."',
+    quantity='".$Data['quantity']."',in_palete='".$Data['in_palete']."',in_palete2='".$Data['in_palete2']."',in_palete3='".$Data['in_palete3']."',in_box='".$Data['in_box']."',
+    me='".$Data['me']."',me1='".$Data['me1']."',brutto='".$Data['brutto']."',netto='".$Data['netto']."',weight='".$Data['weight']."',box_width='".$Data['box_width']."',box_height='".$Data['box_height']."',
+    box_depth='".$Data['box_depth']."',code_pack='".$Data['code_pack']."',code_me='".$Data['code_me']."',code_box='".$Data['code_box']."',gtd='".$Data['gtd']."',customs_code='".$Data['customs_code']."',
+    store_days='".$Data['store_days']."',price='".$Data['price']."',nds='".$Data['nds']."',customs_tax='".$Data['customs_tax']."',block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."',
+    type='".$Data['type']."',horeca=".(int)$Data['horeca'].",tags='".$Data['tags']."',update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$Data['row_'.$Key]
+    ;
+*/	
+	$Query = "
+    UPDATE ".$MYVAR['MYSQL']['PREFIX']."products SET 
+	manufacturer_id=".(int)$Data['manufacturer_id'].",
+	type='".$Data['type']."',
+	is_new=".(int)$Data['is_new'].",
+	horeca=".(int)$Data['horeca'].",
+	product='".$Data['product_'.$Key]."', 
+	description='".$Data['description_'.$Key]."', 
+	composition='".$Data['composition_'.$Key]."',
+	allergens='".$Data['allergens_'.$Key]."',
+	article='".$Data['article']."',
+	packaging='".$Data['packaging']."',
+	netto='".$Data['netto']."',
+	items_per_box='".$Data['items_per_box']."',
+	netto_box='".$Data['netto_box']."',
+	brutto_box='".$Data['brutto_box']."',
+	box_per_palete='".$Data['box_per_palete']."',
+	customs_code='".$Data['customs_code']."',
+	best_before='".$Data['best_before']."',
+	code_item='".$Data['code_item']."',
+	code_box='".$Data['code_box']."',
+	item_length='".$Data['item_length']."',
+	item_width='".$Data['item_width']."',
+	item_height='".$Data['item_height']."',	
+	box_length='".$Data['box_length']."',
+	box_width='".$Data['box_width']."',
+	box_height='".$Data['box_height']."',
+    box_per_layer='".$Data['box_per_layer']."',
+	total_layers='".$Data['total_layers']."',
+	palete_height='".$Data['palete_height']."',
+	block_status=".(int)$Data['block_status'].",
+	notes='".$Data['notes']."',
+    tags='".$Data['tags']."',
+    update_user=".(int)$MYVAR['USER']['ID'].",
+	update_date=NOW() 
+	WHERE id=".(int)$Data['row_'.$Key]
+    ;
+    $Ds=$SQL->Update($Query);   
+    }
+   }
+   
+   
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='product' AND module_id=".(int)$Data['product_id'];
+   $Ds=$SQL->Delete($Query);
+
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id IN (SELECT id FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='product' AND module_id=".(int)$Data['product_id'].")";
+   $Ds=$SQL->Delete($Query);
+   
+   
+   foreach($Data['pictures'] as $Key => $Value){
+   $Query = "INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."pictures SET module='product', module_id=".(int)$Data['product_id'].", picture='".$Value['src']."'";
+   $Ds=$SQL->Insert($Query);
+   
+   $Query = "SELECT MAX(id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."pictures";
+   $Ds=$SQL->Select($Query);
+   $PictureID = $Ds[0]['id'];
+   
+    foreach($Value['info'] as $Key1 => $Value1){
+    $Query = "
+	INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."picture_text SET picture_id=".(int)$PictureID.",lang_id=".(int)$Value1['lang_id'].",
+	title='".$Value1['title']."',text='".$Value1['text']."'
+	";
+    $Ds=$SQL->Insert($Query);
+    }
+   }
+   
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+ 
+ 
+ 
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: add/update manufacturer
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionAddManufacturer'){ 
+ $Data = array(
+ 'manufacturer_id' => $_REQUEST['ManufacturerID'],
+ 'country' => TextToDB($_REQUEST['Country']),
+ 'country_numeric' => TextToDB($_REQUEST['CountryNumeric']),
+ 'country_iso' => TextToDB($_REQUEST['CountryIso']),
+ 'block_status' => $_REQUEST['BlockStatus'],
+ 'notes' => TextToDB($_REQUEST['Notes']),
+ 'exceptions' => array('exceptions','manufacturer_id','notes')
+ );
+ 
+  foreach($MYVAR['LANGS'] AS $Key => $Lang){
+  $Data['name_'.$Key] = TextToDB($_REQUEST['Name_'.$Key]);
+  $Data['row_'.$Key] = $_REQUEST['RowID_'.$Key];
+  $Data['exceptions'][] = 'row_'.$Key;
+  }
+
+
+ 
+  if($Error == ''){
+   foreach($Data as $Key => $Value){
+    if(!in_array($Key,$Data['exceptions']) && $Value == ''){
+    $Error = tr('MSG_ERROR_FILL_ALL_FIELDS');
+    $Out['error_fields'][] = $Key;
+    }
+   }
+  }
+
+  //if($Error == '' && $SQL->GetSQLData($Data['manufacturer_name'],'name',$MYVAR['MYSQL']['PREFIX'].'manufacturers','id') != '' && $Data['manufacturer_id'] == '')$Error = tr('MSG_ERROR_MANUFACTURER_IS_ALREADY_IN_USE');
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  if($Error == ''){
+  
+   if($Data['manufacturer_id'] == ''){
+   $Query = "SELECT MAX(manufacturer_id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers";
+   $Ds=$SQL->Select($Query);
+    if(empty($Ds))$Data['manufacturer_id'] = 1;
+	else $Data['manufacturer_id'] = (int)$Ds[0]['id']+1;
+   }
+   
+   foreach($MYVAR['LANGS'] AS $Key => $Lang){  
+	if($Data['row_'.$Key] == ''){
+	$Query = "
+	INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."manufacturers SET manufacturer_id=".(int)$Data['manufacturer_id'].",lang_id=".(int)$Lang['VALUE'].",name='".$Data['name_'.$Key]."',country='".$Data['country']."',
+	country_numeric='".$Data['country_numeric']."',country_iso='".$Data['country_iso']."', 
+	block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."',create_user=".(int)$MYVAR['USER']['ID'].",create_date=NOW()
+	";
+    $Ds=$SQL->Insert($Query);
+	}
+    else{
+    $Query = "
+	UPDATE ".$MYVAR['MYSQL']['PREFIX']."manufacturers SET name='".$Data['name_'.$Key]."',country='".$Data['country']."',country_numeric='".$Data['country_numeric']."',country_iso='".$Data['country_iso']."',
+	block_status=".(int)$Data['block_status'].",notes='".$Data['notes']."',update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$Data['row_'.$Key]
+	;
+    $Ds=$SQL->Update($Query);
+    }
+  }
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+ 
+ 
+//-----------------------------------------------------------------------------------
+//ACTION: delete product
+//-----------------------------------------------------------------------------------  
+ if($action == 'actionDeleteProduct'){
+ $Data = array(
+ 'product_id' => $_REQUEST['ProductID']
+ );
+ 
+ $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='product' AND module_id=".(int)$Data['product_id'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds)){
+   foreach($Ds as $Key => $Value){
+//   $Picture = $Value['picture'];
+//    if(@file_exists($File))unlink($File);
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id=".(int)$Value['id'];
+   $DsD=$SQL->Delete($Query);
+   }
+  
+  $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='product' AND module_id=".(int)$Data['product_id'];
+  $DsD=$SQL->Delete($Query);
+  }
+  
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE product_id=".(int)$Data['product_id'];
+ $DsD=$SQL->Delete($Query);
+ WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+ }
+ ?>

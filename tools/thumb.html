@@ -1,0 +1,113 @@
+<?php
+require_once $_SERVER["DOCUMENT_ROOT"].'/.inc/classes/simpleimage/SimpleImage.php';
+
+
+
+
+
+
+
+function imageThumb($Data){
+//@params array('SRC','ROOT','WIDTH','HEIGHT')
+
+$Allowed = array('jpeg','jpg','png','gif');
+$Image = $Data['ROOT'].rawurldecode($Data['SRC']);
+
+$Tmp = explode('.',$Data['SRC']);
+$Extension = strtolower($Tmp[(sizeof($Tmp)-1)]);
+
+ if(!in_array($Extension,$Allowed)){
+ $Text = 'NOT FOUND';
+ header("Content-Type: image/png");
+ $im = @imagecreate($Data['SIZE'], $Data['SIZE']) or die("Cannot Initialize new GD image stream");
+ $background_color = imagecolorallocate($im, 0, 0, 0);
+ $text_color = imagecolorallocate($im, 233, 14, 91);
+ imagestring($im, 3, round($Data['SIZE']/2-strlen($Text)*3.5), round($Data['SIZE']/2-strlen($Text)),  $Text, $text_color);
+ imagepng($im);
+ imagedestroy($im);
+ }
+ else {
+ 
+ $img = new abeautifulsite\SimpleImage($Image);
+ $img->best_fit($Data['WIDTH'], $Data['HEIGHT']);
+ 
+ $img->output();
+ 
+ /*
+ 
+ $Info = getImageSize($Image);
+ $Info['XtoY'] = $Info[0]/$Info[1];
+ $Info['orientation'] = $Info[0] >= $Info[1] ? 'landscape' : 'portrait';
+  
+	if($Info['orientation'] == 'landscape'){
+	
+	//$Data['HEIGHT'] = $Data['HEIGHT'] / $Info['XtoY'];
+	}
+	if($Info['orientation'] == 'portrait'){
+	//$Data['WIDTH'] = $Data['WIDTH'] / $Info['XtoY'];
+	}  
+  
+  
+  $Data['XtoY'] = $Data['WIDTH']/$Data['HEIGHT'];
+  //print_r($Info);
+
+  ///print_r($Data);
+  
+ $New = array();
+ $New['new_w'] = $Data['WIDTH'];
+ $New['new_h'] = $Data['HEIGHT'];
+ $New['XtoY'] = $Data['XtoY'];
+ $New['width-original'] = $Info[0];
+ $New['height-original'] = $Info[1];
+
+  if($Data['XtoY'] >= $Info['XtoY']){
+  $New['width'] = $Info[0];
+  $New['height'] = $Info[0]/$New['XtoY'];
+  }
+  if($Data['XtoY'] < $Info['XtoY']){
+  $New['width'] = $Info[1]*$New['XtoY'];
+  $New['height'] = $Info[1];
+  }
+
+$New['XtoY-new'] = $New['width']/$New['height'];  
+
+$New['dst_x'] = 0;
+$New['dst_y'] = 0;
+$New['src_x'] = $New['width-original']/2 - $New['width']/2;
+$New['src_y'] = $New['height-original']/2 - $New['height']/2;
+$New['src_w'] = $New['width'];
+$New['src_h'] = $New['height'];
+
+ if($Info['mime'] == 'image/jpeg')$IM = ImageCreateFromJpeg($Image); 
+ if($Info['mime'] == 'image/gif')$IM = ImageCreateFromGIF($Image); 
+ if($Info['mime'] == 'image/png')$IM = imageCreateFromPNG($Image);
+
+$newTmpIM = ImageCreateTrueColor ($New['width'],$New['height']);
+imagecopy($newTmpIM, $IM, $New['dst_x'], $New['dst_y'], $New['src_x'], $New['src_y'], $New['src_w'], $New['src_h']);
+ 
+ 
+
+ $newIM = ImageCreateTrueColor ($New['new_w'],$New['new_h']);
+ imagecopyresampled($newIM, $newTmpIM, 0, 0, 0, 0, $New['new_w'], $New['new_h'], $New['src_w'], $New['src_h']);
+
+ header("Content-Type: ".$Info['mime']);
+  if($Info['mime'] == 'image/jpeg')imagejpeg($newIM);
+  if($Info['mime'] == 'image/gif')imagegif($newIM);
+  if($Info['mime'] == 'image/png')imagepng($newIM);
+ imagedestroy($newIM);
+ imagedestroy($newTmpIM);
+ imagedestroy($IM);
+ */
+ }
+}
+
+
+
+$Data = array();
+$Data['SRC'] = $_REQUEST['src'];
+$Data['ROOT'] = $_SERVER['DOCUMENT_ROOT'];
+$Data['WIDTH'] = (isset($_REQUEST['width']) && $_REQUEST['width'] != '') ? $_REQUEST['width'] : '';
+$Data['HEIGHT'] = (isset($_REQUEST['height']) && $_REQUEST['height'] != '') ? $_REQUEST['height'] : '';
+ //sleep(1);
+imageThumb($Data);
+?>

@@ -1,0 +1,124 @@
+<?php
+//-------------------------------------------------------------------------------
+//Request method == 'POST' [submitted form or something like this]
+//-------------------------------------------------------------------------------
+ if($_SERVER["REQUEST_METHOD"] == 'POST'){
+ $postAction = (isset($_REQUEST['postAction'])) ? $_REQUEST['postAction'] : '';
+ $Error = '';
+ $saveMessage = tr('MSG_DATA_SAVE_COMPLETE',0); 
+ 
+ 
+ 
+  
+  if($postAction == '****'){
+  $Data = array(
+  'username' => $_REQUEST['Username'],
+  'password' => md5($_REQUEST['Password']),
+  'code' => $_REQUEST['Code'],
+  'code_nr' => $_REQUEST['CodeNr']
+  );
+
+  header("Location: ".$Redirect."\n\n");
+  exit;
+  }
+
+}
+
+
+
+//-------------------------------------------------------------------------------
+//Request method == 'GET' [variables posted via location bar]
+//-------------------------------------------------------------------------------
+ if($_SERVER["REQUEST_METHOD"] == 'GET'){
+ $getAction = (isset($_REQUEST['getAction'])) ? $_REQUEST['getAction'] : '';
+
+
+//-------------------------------------------------------------------------------
+//Delete user group
+//-------------------------------------------------------------------------------  
+  if($getAction == 'delType'){
+  $Data = array(
+  'type_id' => (int)$_REQUEST['TypeID'],
+  'sub_id' => $_REQUEST['SubId']
+  );
+  
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_list WHERE type_id=".$Data['type_id'];
+  $DsC=$SQL->Select($Query);
+
+   if(!empty($DsC))$Error = tr('MSG_ERROR_USER_TYPE_IS_IN_USE');
+   
+   if($Error!='')WriteToSession(json_encode(array('text' => $Error)));
+   if($Error == ''){
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."users_types WHERE id=".$Data['type_id'];
+   $Ds=$SQL->Delete($Query);
+   }
+
+  $Redirect = '?SubId='.$Data['sub_id'];
+  header("Location: ".$Redirect."\n\n");
+  exit;
+  }
+  
+
+//-------------------------------------------------------------------------------
+//Delete menu node
+//-------------------------------------------------------------------------------  
+  if($getAction == 'delNode'){
+  $Data = array(
+  'node_id' => (int)$_REQUEST['NodeID'],
+  'sub_id' => $_REQUEST['SubId']
+  );
+  
+   if($Data['node_id'] != 0){
+   $dbtree->Delete($Data['node_id']);
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id=".$Data['node_id'];
+   $Ds=$SQL->Delete($Query);
+  
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id=".$Data['node_id'];
+   $Ds=$SQL->Delete($Query);  
+   WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+   }
+  
+ $Redirect = '?SubId='.$Data['sub_id'];
+ header("Location: ".$Redirect."\n\n");
+ exit;  
+ }
+
+
+//-------------------------------------------------------------------------------
+//Delete language
+//-------------------------------------------------------------------------------  
+  if($getAction == 'delLanguage'){
+  $Data = array(
+  'lang_id' => (int)$_REQUEST['LangID'],
+  'sub_id' => $_REQUEST['SubId']
+  );
+  
+  $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE lang_id=".$Data['lang_id'];
+  $Ds=$SQL->Delete($Query);
+
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE id=".$Data['lang_id'];
+ $Ds=$SQL->Delete($Query);
+  
+ WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0)))); 
+
+ $Redirect = '?SubId='.$Data['sub_id'];
+ header("Location: ".$Redirect."\n\n");
+ exit;  
+ } 
+ 
+ if($getAction == '****'){
+  $Data = array(
+  'username' => $_REQUEST['Username'],
+  'password' => md5($_REQUEST['Password']),
+  'code' => $_REQUEST['Code'],
+  'code_nr' => $_REQUEST['CodeNr']
+  );
+
+  header("Location: ".$Redirect."\n\n");
+  exit;
+  }
+
+
+}
+
+?>

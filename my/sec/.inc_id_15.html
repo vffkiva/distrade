@@ -1,0 +1,83 @@
+<?php
+function mySection(){
+global $SQL,$dbtree,$MYVAR;
+$dbtree->Full('');
+$List = '<table width="100%"><tr><td>';
+ while ($item = $dbtree->NextRow()) {
+ $Selectable = ($item['is_permission'] == '1') ? '1' : '0';
+ $List .= '
+  <div id="menu-id-'.$item['section_id'].'" class="table-row2 permission-block">
+   <div style="display:none">'.$Selectable.'</div>
+   '.str_repeat('&nbsp;', 2 * $item['section_level']).'[ID: '.$item['section_id'].'] '.netViewNode($item['section_id']).'
+  </div>
+ ';
+ }
+ 
+$List .= '
+</td></tr><tr><td><b>'.tr('STR_OR').'</b></td></tr>
+<tr><td>
+<div id="menu-id-all" class="table-row2 permission-block">
+<div style="display:none">1</div>
+'.tr('STR_PERMISSION_ALL',false).'</div>
+<div id="menu-id-none" class="table-row2 permission-block">
+<div style="display:none">1</div>
+'.tr('STR_PERMISSION_NONE',false).'</div></td></tr>
+</table>
+';
+return $List; 
+}
+
+$ShowTitle = netViewTree($SubId);
+$Colspan = 4;
+echo '
+<table width="500" class="table-class1">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr> 
+<tr><td class="table-row1" colspan="'.$Colspan.'">'.tr('STR_PERMISSION_HELP').'</td></tr>
+ ';
+ 
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."users_types";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $NR=$SQL->rows;
+ $CR=0;
+ $TotalTypeID='';
+  echo'
+  <tr>
+  <td class="text-top">
+  ';
+  while($CR<$NR){
+  $TotalTypeID .= $Ds[$CR]['id'].'_';
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE FIND_IN_SET(".$Ds[$CR]['id'].",perm)>0";
+  $Ds1=$SQL->Select($Query);
+  $PermArr=array();
+  $Perm='';
+   if($Ds1){
+   $NR1=$SQL->rows;
+   $CR1=0;
+    while($CR1<$NR1){$PermArr[sizeof($PermArr)]=$Ds1[$CR1]['section_id'];$CR1++;}
+   $Perm = implode('|',$PermArr);
+   }
+  echo '
+  <div id="type-id-'.$Ds[$CR]['id'].'" class="table-row2 permission-block">
+   <div style="display:none">'.$Perm.'</div>
+  '.$SQL->GetSQLData($Ds[$CR]['id'],'id',$MYVAR['MYSQL']['PREFIX'].'users_types','type').'
+  </div>
+  ';
+   $CR++;
+   }
+   echo'
+  </td>
+  <td>'.mySection().'</td>
+  </tr>
+  <tr>
+  <td class="table-row-footer" colspan="2">
+  '.myButton(array('text'=>tr('BTTN_SAVE'),'onclick'=>'savePermissions();')).'
+  </td></tr></table>
+ ';
+  }
+
+echo'
+<script type="text/javascript" src="'.$MYVAR['HTTP'].'scripts/permission.js" language="javascript"></script>
+';
+
+?>

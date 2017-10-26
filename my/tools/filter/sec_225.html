@@ -1,0 +1,12 @@
+<?php
+$Data['fields'] = array(
+'name' => (isset($Data['fields']['name'])) ? $Data['fields']['name'] : ''
+);
+
+$tmpOut .= '
+<tr>
+<td>'.tr('STR_MANUFACTURER').'</td>
+<td><input type="text" name="name" class="Design width200" value="'.$Data['fields']['name'].'"/></td>
+</tr>
+';
+?>

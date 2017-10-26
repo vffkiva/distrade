@@ -1,0 +1,143 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$Colspan = sizeof($MYVAR['LANGS']) + 3;
+
+$Files = array();
+function getDirectory( $path = '.', $level = 0, &$Files){
+
+    $ignore = array('cgi-bin', '.', '..', 'fpdf17', 'ckeditor', 'files', 'css', 'scripts', 'fm', 'img', 'sessions' );
+    // Directories to ignore when listing output. Many hosts
+    // will deny PHP access to the cgi-bin.
+$allowed = array('sec');
+
+
+    $dh = @opendir( $path );
+    // Open the directory to the handle $dh
+    
+    while( false !== ( $file = readdir( $dh ) ) ){
+    // Loop through the directory
+    
+        if( !in_array( $file, $ignore ) ){
+
+        // Check that this file is not to be ignored
+            
+            $spaces = str_repeat( '&nbsp;', ( $level * 4 ) );
+            // Just to add spacing to the list, to better
+            // show the directory tree.
+            
+            if( is_dir( "$path/$file" ) ){
+            // Its a directory, so we need to keep reading down...
+            
+                //echo "<strong>$spaces $file</strong><br />";
+                getDirectory( "$path/$file", ($level+1), &$Files);
+                //$Files[] = $file;
+                // Re-call this same function but on a new directory.
+                // this is what makes function recursive.
+            } else {
+            
+                //echo "$spaces $file<br />";
+                $Files[] = $path.'/'.$file;
+                // Just print out the filename
+            
+            }
+        
+        }
+    
+    }
+    
+    closedir( $dh );
+    // Close the directory handle
+} 
+
+getDirectory($_SERVER['DOCUMENT_ROOT'],0, $Files);
+
+//PrintR($Files);
+
+
+
+
+
+//$Pattern = '/tr\([\'|\"][_A-Z]+[\'|\"|\']\)/';
+
+$Pattern = '/tr\([\'|\"][_A-Z0-9]+[\'|\"|\'][,0]*\)/';
+$PatternIn = array('/tr\(\'/','/\'\)/','/\'\,0\)/');
+$PatternOut = array('');
+$Contents = '';
+$VarsArr = array();
+
+
+ foreach($Files as $File){
+ //$Data = file($_SERVER['DOCUMENT_ROOT'].'/'.$File);
+ $Data = file($File);
+ $Rows = preg_grep($Pattern,$Data);
+ //pre_print($Rows);
+
+  foreach($Rows as $Value){
+  preg_match_all($Pattern,$Value,$Out);
+   foreach($Out[0] as $SubValue){
+   $Var = preg_replace($PatternIn,$PatternOut,$SubValue);
+    if(!in_array($Var,$VarsArr))$VarsArr[] = $Var;
+   }
+  } 
+ }
+
+
+$Tmp = getCacheLangVars();
+$VarsArr = array_unique(array_merge($VarsArr,$Tmp));
+
+ 
+asort($VarsArr);
+//printr($VarsArr);
+
+
+echo'
+<table width="100%" class="table-class1">
+<tr>
+<td class="table-row-header bold">#</td>
+<td class="table-row-header bold">Variable</td>
+';
+
+ foreach($MYVAR['LANGS'] AS $Nr => $Lang){
+ echo'
+ <td class="table-row-header bold">Var ('.$Lang['lang_short'].')</td>
+ ';
+ }
+echo'
+</tr>
+';
+ if(sizeof($VarsArr) == 0)echo'<tr><td class="text-center" colspan="'.$Colspan.'">No data</td></tr>';
+ else {
+ $j = 1;
+  foreach($VarsArr as $Nr => $Var){
+  echo'
+  <tr>
+  <td>'.$j.'</td>
+  <td>'.$Var.'</td>
+  ';
+
+   foreach($MYVAR['LANGS'] AS $i => $Value){
+   $Lang = strtolower($Value['lang_system']); 
+   $TrVar = 'TR_'.$Lang.'_'.$Var;
+    if(defined($TrVar)) $VarText = constant($TrVar); 
+    else $VarText = strhtml($Var);
+
+  
+  echo '<td><span class="lang-variable" id="MAINVAR_'.$Lang.'_'.$Var.'">'.$VarText.'</span></td>';
+  }
+  echo'
+  </tr>
+  ';
+  $j++;
+  }
+ 
+ }
+
+
+echo ' 
+</table>
+';
+
+//echo tr('BTTN_SELECT');
+//echo tr('STR_GALLERY');
+echo tr('STR_TITLE_ADD_MY_ELEMENT');
+?>

@@ -1,0 +1,270 @@
+<?php
+$Data = array('per_row' => 3, 'nr' => array(), 'total' => count($Modules['CENTER']), 'rows' => array());
+ 
+ $Query = "SELECT GROUP_CONCAT(nr) AS nr FROM ".$MYVAR['MYSQL']['PREFIX']."layout WHERE position='CENTER' AND lang_id=".(int)$MYVAR['LANG_ID'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds))$Data['nr'] = explode(',',$Ds[0]['nr']);
+  
+  $a = array_diff(array('0','1','2'),$Data['nr']);
+   if(count($a) < 3)$Data['rows'][] = $Data['per_row'] - count($a);
+  $a = array_diff(array('3','4','5'),$Data['nr']);
+   if(count($a) < 3)$Data['rows'][] = $Data['per_row'] - count($a);  
+  $a = array_diff(array('6','7','8'),$Data['nr']);
+   if(count($a) < 3)$Data['rows'][] = $Data['per_row'] - count($a);
+
+  
+  if(!empty($Data['rows'])){
+  echo '
+  <div style="display: table;">
+  ';
+  $CurrentRow = 0;
+  $RowCell = 0;
+   foreach($Modules['CENTER'] as $Key => $Value){
+   $Params = array_merge(array('module_type' => '', 'module_id' => '', 'show_title' => 0, 'show_navigation' => 0), $Value['params']);
+    if($RowCell == $Data['rows'][$CurrentRow] || ($RowCell == 0 && $CurrentRow == 0)){
+     if($RowCell == $Data['rows'][$CurrentRow]){
+	 echo '
+   <!--row end--></div>
+     ';
+	 $CurrentRow++;
+	 $RowCell = 0;
+	 }
+    echo '
+   <!--row start--><div class="section-row" style="margin-bottom:10px;">
+    ';
+    }
+    $Class = $Width = '';
+   	 if($Data['rows'][$CurrentRow] == 1){
+	 $Width = ' width100p';
+	 }
+	 if($Data['rows'][$CurrentRow] == 2){
+	 $Width = ' width50p';
+	 $Class = ($RowCell == 0) ? ' cell-left' : ' cell-right';
+	 }
+	 if($Data['rows'][$CurrentRow] == 3){
+     $Width = ' width33p';	 
+	  if($RowCell == 0)$Class = ' cell-left';
+	  if($RowCell == 1){$Class = ' cell-center'; $Width = ' width34p';}
+	  if($RowCell == 2)$Class = ' cell-right';
+	 }
+  
+    $Title = $Text = $Link = $Style = '';
+	$LinkText = tr('BTTN_MORE',0);
+	
+     if($Params['module_type'] == 'section'){
+     $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id=".(int)$Params['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+     $Ds=$SQL->Select($Query);
+      if(!empty($Ds)){
+	  $Title = TextFromDB($Ds[0]['title']);
+	  $Text = stripslashes($Ds[0]['preview_text']);
+	   if($Text == '') $Text = '&nbsp;';
+	  }
+     $Link = $MYVAR['HTTP'].'?_page='.$Ds[0]['sub_id'];
+	 
+	 $Query = "SELECT title_style FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id=".(int)$Ds[0]['sub_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+     $DsS=$SQL->Select($Query);
+      if(!empty($DsS) && $DsS[0]['title_style']!='')$Style = ' style="'.$DsS[0]['title_style'].'"';
+	 }
+
+     if($Params['module_type'] == 'news'){
+     $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE news_id=".(int)$Params['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID']." ORDER BY date DESC";
+     $Ds=$SQL->Select($Query);
+      if(!empty($Ds)){
+	  $Title = TextFromDB($Ds[0]['title']);
+	  $Text = stripslashes($Ds[0]['description']);
+	   if($Text == '') $Text = '&nbsp;';
+	  }
+     $Link = $MYVAR['HTTP'].'?_news='.$Ds[0]['news_id'];
+	 }
+
+     if($Params['module_type'] == 'module'){
+     $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE module_id=".(int)$Params['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+	 $Ds=$SQL->Select($Query);
+      if(!empty($Ds)){
+	  $Title = TextFromDB($Ds[0]['title']);
+	  $Text = stripslashes($Ds[0]['description']);
+	   if($Text == '') $Text = '&nbsp;';
+	  }
+     $Link = $MYVAR['HTTP'].'?_module='.$Ds[0]['module_id'];
+	 }
+
+
+     if($Params['module_type'] == 'product'){
+	 $ProductsNews = array();
+      if((int)$Params['module_id'] == -1){
+	  $Title = tr('STR_NEW_PRODUCT',0);
+	  $Params['module_id'] = 1;
+	  $Query = "SELECT COUNT(id) AS total FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE block_status=0 AND is_new=1 AND lang_id=".(int)$MYVAR['LANG_ID'];
+	  $Ds=$SQL->Select($Query);
+	   if(!empty($Ds)){
+	   $Random = rand(0,($Ds[0]['total']-1));
+	   	$Query = "SELECT product_id FROM ".$MYVAR['MYSQL']['PREFIX']."products WHERE block_status=0 AND is_new=1 AND lang_id=".(int)$MYVAR['LANG_ID']." LIMIT ".$Random.",1";
+	    $Ds=$SQL->Select($Query);
+		$Params['module_id'] = $Ds[0]['product_id'];
+
+	  	$Query = "
+        SELECT t1.*,t2.name AS manufacturer FROM ".$MYVAR['MYSQL']['PREFIX']."products AS t1 
+		LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."manufacturers AS t2 ON t1.manufacturer_id=t2.manufacturer_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+		WHERE t1.block_status=0 AND t1.is_new=1 AND t1.lang_id=".(int)$MYVAR['LANG_ID']
+		;
+		$DsN=$SQL->Select($Query);
+		 if(!empty($DsN)){
+		  foreach($DsN AS $KeyN => $ValueN){
+		  
+		  $Tmp = array(
+		  'id' => $ValueN['product_id'], 
+		  'manufacturer' => TextFromDB($ValueN['manufacturer']), 
+		  'name' => TextFromDB($ValueN['product']), 
+		  'weight' => $ValueN['netto'],
+		  'description' => TextFromDB($ValueN['description'])
+		  );
+		  
+		  $Query = "
+SELECT t1.picture FROM ".$MYVAR['MYSQL']['PREFIX']."pictures AS t1 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."picture_text AS t2 ON t1.id=t2.picture_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+WHERE t1.module='product' AND module_id=".(int)$ValueN['product_id']
+	      ;
+	      $DsP=$SQL->Select($Query);
+	       if(!empty($DsP)){
+		   //<img class="product-image" src="/tools/thumb.html?src='.rawurlencode($DsP[0]['picture']).'&amp;width=120&amp;height=160" style="width:120px; height: 160px;"/>
+		   $Tmp['description'] = '<table><tr><td><span class="align-left product-picture" style="margin-right: 5px;">
+		   <a title="" href="'.$DsP[0]['picture'].'">
+		   <img class="product-image" src="/tools/thumb.html?src='.rawurlencode($DsP[0]['picture']).'&amp;width=120&amp;height=160"/>
+		   </a>
+		   </span></td><td class="description-text"><div>'.$Tmp['description'].'</div></td></tr></table>';
+		   }
+		  $ProductsNew[] = $Tmp;
+		  }
+		 }
+	   }
+	  }
+	 
+	 $Query = "
+	 SELECT t1.*,t2.name AS manufacturer FROM ".$MYVAR['MYSQL']['PREFIX']."products AS t1 
+	 LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."manufacturers AS t2 ON t1.manufacturer_id=t2.manufacturer_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+	 WHERE t1.product_id=".(int)$Params['module_id']." AND t1.lang_id=".(int)$MYVAR['LANG_ID'];
+	 $Ds=$SQL->Select($Query);
+      if(!empty($Ds)){
+	   if($Title == '') $Title = TextFromDB($Ds[0]['product']);
+	  $Tmp = array('name' => TextFromDB($Ds[0]['product']), 'description' => TextFromDB($Ds[0]['description']));
+	   //if(iconv_strlen($Tmp['name'],'UTF-8') > 30)$Tmp['name'] = iconv_substr($Tmp['name'],0,30,'UTF-8').'...';
+	  
+	  $Query = "
+	  SELECT t1.picture FROM ".$MYVAR['MYSQL']['PREFIX']."pictures AS t1 
+	  LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."picture_text AS t2 ON t1.id=t2.picture_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+	  WHERE t1.module='product' AND module_id=".(int)$Params['module_id']
+	  ;
+	  $DsP=$SQL->Select($Query);
+	   if(!empty($DsP)){
+	   //<img class="product-image" src="/tools/thumb.html?src='.rawurlencode($DsP[0]['picture']).'&amp;width=120&amp;height=160" style="width:120px; height: 160px;"/>
+	   $Tmp['description'] = '<table><tr><td><span class="align-left product-picture" style="margin-right: 5px;">
+	   <a title="" href="'.$DsP[0]['picture'].'">
+	   <img class="product-image" src="/tools/thumb.html?src='.rawurlencode($DsP[0]['picture']).'&amp;width=120&amp;height=160"/>
+	   </a>
+	   </span></td><td class="description-text"><div>'.$Tmp['description'].'</div></td></tr></table>';
+	   }
+	  $Text = '
+	  <table class="product">
+	  <tr><td class="bolder text-nowrap">'.tr('STR_MANUFACTURER',0).'</td><td><span class="manufacturer">'.TextFromDB($Ds[0]['manufacturer']).'</span></td></tr>
+	  <tr><td class="bolder text-nowrap">'.tr('STR_PRODUCT_NAME',0).'</td><td class="text-nowrap"><span class="name">'.$Tmp['name'].'</span></td></tr>
+	  <tr><td class="bolder text-nowrap">'.tr('STR_WEIGHT',0).'</td><td><span class="weight">'.TextFromDB($Ds[0]['netto']).'</span></td></tr>
+	  <tr><td class="text" colspan="2"><span class="description">'.$Tmp['description'].'</span></td></tr>
+	  <div class="hidden-object product-current">'.$Ds[0]['product_id'].'</div>
+	  </table>
+	  ';
+	   if($Text == '') $Text = '&nbsp;';
+	  }
+     
+	 $Link = $MYVAR['HTTP'].'?_product='.$Ds[0]['product_id'];
+	 $LinkText = tr('BTTN_DETAILS',0);
+	 }
+	 
+	 if($Params['module_type'] == 'banner' && $Params['module_id'] != ''){
+     $Text = showBanner(array('banner_id'=>$Params['module_id']));
+	 }
+
+    echo '  
+    <div class="section-cell'.$Width.'">
+     <div class="section'.$Class.'">
+	  '.(((int)$Params['show_title'] == 1) ? '<div class="title"'.$Style.'>'.$Title.'</div>' : '').'
+	  <div class="text">'.$Text.'</div> 
+      '.(((int)$Params['show_navigation'] == 1) ? '<div class="navigation">'.myButton(array('text'=>$LinkText,'onclick'=>'window.location=\''.$Link.'\';')).'</div>' : '').'
+     </div>
+	
+	<div class="hidden-object">
+	';
+	 if($Params['module_type'] == 'product'){
+	  foreach($ProductsNew as $KeyN => $ValueN){
+	  echo '
+	  <div pid="'.$ValueN['id'].'" class="product-rotate-item">
+	   <span class="manufacturer">'.$ValueN['manufacturer'].'</span>
+	   <span class="name">'.$ValueN['name'].'</span>
+	   <span class="weight">'.$ValueN['weight'].'</span>
+	   <span class="description">'.$ValueN['description'].'</span>
+	  </div> 
+	  ';
+	  }
+	 } 
+	echo'
+	</div>
+	</div>
+   ';   
+   
+    if($Key == ($Data['total'] -1)){
+	echo '
+   <!--row end--></div>
+   ';
+	}
+   $RowCell++;   
+   }
+  
+  echo '
+  </div>
+  ';
+  }
+
+
+
+
+
+
+/*	
+echo'
+    <div style="display: table;">
+	 <div style="table-cell; padding:0 5px 0 0;">
+    <div class="section">
+	 <div class="title">Here  comes some title</div>
+	 <div class="text">
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111  
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111  1123333
+		</div> 
+	  <div class="navigation">'.myButton(tr('BTTN_MORE'),'button','main','window.location=\'?_page='.$PageID.'\';').'</div>
+    </div>
+
+	</div>
+	<div style="display: table-cell; padding:0 0 0 5px;">
+	
+    <div class="section">
+	 <div class="title">Here  comes some title</div>
+	 <div class="text">
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111  
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type  nd scrambled it to make a typek. 1
+		This is new 1. orem Ipsum is simply dummy m Ipsum has been the industrys  standard dummy text ever since the 1500s, when an unknown printer took a galley of type 111  1123333
+		</div> 
+	  <div class="navigation">'.myButton(tr('BTTN_MORE'),'button','main','window.location=\'?_page='.$PageID.'\';').'</div>
+    </div>
+	
+	</div>
+	</div>
+';
+*/
+?>

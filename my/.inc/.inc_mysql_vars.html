@@ -1,0 +1,66 @@
+<?php
+//---------------------------------------------------------------------------------
+//MySQL variables
+//---------------------------------------------------------------------------------
+$MYVAR['MYSQL']['DB'] = "wwwdistraderu";
+$MYVAR['MYSQL']['USER'] = "distrade";
+$MYVAR['MYSQL']['PASS'] = "evroPass";
+$MYVAR['MYSQL']['HOST'] = "localhost";
+$MYVAR['MYSQL']['PREFIX'] = "db_";
+$SQL = new mysql_class($MYVAR['MYSQL']['USER'],$MYVAR['MYSQL']['PASS'],$MYVAR['MYSQL']['HOST'],$MYVAR['MYSQL']['DB']);
+
+
+//---------------------------------------------------------------------------------
+//Checking online user
+//---------------------------------------------------------------------------------
+ if($MYVAR['USER']['ID']!=''){
+ $Query = "
+ SELECT t1.username,t1.type_id,t1.start_subid,t2.type,t2.start_subid  
+ FROM ".$MYVAR['MYSQL']['PREFIX']."users_list AS t1 
+ LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."users_types AS t2 ON t1.type_id=t2.id 
+ WHERE t1.id=".(int)$MYVAR['USER']['ID']
+ ;
+ $Ds=$SQL->Select($Query);
+ $MYVAR['USER']['NAME'] = $Ds[0]['username'];
+ $MYVAR['USER']['MODE'] = strtolower($Ds[0]['type']);
+ $MYVAR['USER']['MODE_ID'] = $Ds[0]['type_id'];
+ $MYVAR['USER']['START_SUBID'] = $Ds[0]['start_subid'];
+ online();
+ }
+
+
+//---------------------------------------------------------------------------------
+//Create variables
+//---------------------------------------------------------------------------------
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."settings_vars ORDER BY var";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $NR=$SQL->rows;
+ $CR=0;
+  while($CR<$NR){
+  $MYVAR['VARS'][$Ds[$CR]['var']] = $Ds[$CR]['value'];
+  $CR++;
+  }
+ }
+
+//---------------------------------------------------------------------------------
+//Checking type of the section
+//---------------------------------------------------------------------------------
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."menu WHERE section_id='".$SubId."'";
+$Ds=$SQL->Select($Query);
+$MYVAR['SUB_ID']['TYPE'] = '';
+$MYVAR['FCKEDITOR'] = false;
+ if($Ds){
+ $MYVAR['SUB_ID']['TYPE'] = $Ds[0]['type'];
+ } 
+ if($MYVAR['SUB_ID']['TYPE'] == 0)$MYVAR['FCKEDITOR'] = true;
+
+$MYVAR['LANGS'] = Table2Arr("SELECT id,lang_short AS lang, lang_system,lang_short,lang_long FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE block_status=0 ORDER BY id","lang","id","lang_system|lang_short|lang_long");
+if (file_exists($_SERVER['DOCUMENT_ROOT'].'/cache/tr_cache.html'))include_once $_SERVER['DOCUMENT_ROOT'].'/cache/tr_cache.html';
+
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE lang_system LIKE '".$MYVAR['LANG']."'";
+$Ds=$SQL->Select($Query);
+$MYVAR['LANG_ID'] = $Ds[0]['id'];
+$MYVAR['LANG_LONG'] = $Ds[0]['lang_long'];
+
+?>

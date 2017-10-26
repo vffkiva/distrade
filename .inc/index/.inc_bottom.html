@@ -1,0 +1,68 @@
+<?php
+
+
+$Total = count($Modules['BOTTOM']);
+echo '<div class="section-row">';
+
+ foreach($Modules['BOTTOM'] as $Key => $Value){
+ $Params = array_merge(array('module_type' => '', 'module_id' => '', 'show_title' => 1, 'show_navigation' => 1), $Value['params']);
+ $Class = $Width = '';
+  if($Total == 1){
+  $Width = ' width100p';
+  }
+  if($Total == 2){
+  $Width = ' width50p';
+  $Class = ($Key == 0) ? ' cell-left' : ' cell-right';
+  }
+  if($Total == 3){
+  $Width = ' width33p';	 
+   if($Key == 0)$Class = ' cell-left';
+   if($Key == 1){$Class = ' cell-center';$Width = ' width34p';}
+   if($Key == 2)$Class = ' cell-right';
+  }
+
+  $Title = $Text = $Link = $Style = '';
+  if($Params['module_type'] == 'news'){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."news WHERE news_id=".(int)$Params['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+   $Title = TextFromDB($Ds[0]['title']);
+   $Text = stripslashes($Ds[0]['description']);
+	if($Text == '') $Text = '&nbsp;';
+   }
+  $Link = $MYVAR['HTTP'].'?_news='.$Ds[0]['news_id'];
+  } 
+
+  if($Params['module_type'] == 'module'){
+  $Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."modules WHERE module_id=".(int)$Params['module_id']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+  $Ds=$SQL->Select($Query);
+   if(!empty($Ds)){
+   $Title = TextFromDB($Ds[0]['title']);
+   $Text = stripslashes($Ds[0]['description']);
+    if($Text == '') $Text = '&nbsp;';
+   }
+   $Link = $MYVAR['HTTP'].'?_module='.$Ds[0]['module_id'];
+  }
+  
+  echo '  
+   <div class="section-cell'.$Width.'">
+    <div class="section">
+  '.(((int)$Params['show_title'] == 1) ? '<div class="title"'.$Style.'>'.$Title.'</div>' : '').'
+     <div class="text text-nowrap">'.$Text.'</div> 
+     '.(((int)$Params['show_navigation'] == 1) ? '<div class="navigation">'.myButton(array('text'=>tr('BTTN_MORE'),'onclick'=>'window.location=\''.$Link.'\';')).'</div>' : '').'
+    </div>
+</div>
+  ';
+  }
+ echo'</div>';
+
+/*
+    <div class="logo"><!----></div>
+	<div class="address">
+	ooo Distrade<br/>
+	Rossija ulice 122343<br/>
+	Phone 1: 1234567 <br/>
+	Phone 1: 1234567
+	</div>
+	*/
+?>

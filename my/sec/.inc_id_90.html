@@ -1,0 +1,107 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+$NodeID = (!isset($NodeID) || $NodeID=='') ? '0' : $NodeID;
+$dbtree->Full('');
+$ShowARR = array();
+$ShowARR = treeParent($NodeID);
+
+$Colspan = 11 + sizeof($MYVAR['LANGS']);
+echo'
+<table class="table-class1 width100p">
+<tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+<tr>
+<td class="table-row2">#</td>
+<td class="table-row2">ID</td>
+<td class="table-row2">'.tr('STR_CHILDS').'</td>
+<td class="table-row2">'.tr('STR_TEXT').'</td>
+';
+ foreach($MYVAR['LANGS'] as $Lang)echo'<td class="table-row2">'.tr('STR_TEXT').' ['.$Lang['lang_long'].']</td>';
+echo'
+<td class="table-row2">'.tr('STR_MENU_NODE_MODE').'</td>
+<td class="table-row2">'.tr('STR_MENU_NODE_TYPE').'</td>
+<td class="table-row2">'.tr('STR_LINK').'</td>
+<td class="table-row2">'.tr('STR_IS_PERMISSION').'</td>
+<td class="table-row2">*</td>
+<td class="table-row2">**</td>
+<td class="table-row2" width="80"><!----></td>
+</tr>
+';
+$Nr=0;
+ while ($item = $dbtree->NextRow()) {
+ $abc=0;
+ $Childs = '';
+ $TotalChilds=0;
+ $Childs1 = '';
+ $Tmp = array();
+ $a = treeChilds($item['section_id']);
+  for($i=0;$i<sizeof($a);$i++){$Childs .= $a[$i]['section_id'].'|';$TotalChilds++;}
+ $Childs = substr($Childs,0,strlen($Childs)-1);
+
+ $b = treeChilds($item['section_id'],'childs');
+  for($i=0;$i<sizeof($b);$i++)$Childs1 .= $b[$i]['section_id'].'|';
+ $Childs1 = substr($Childs1,0,strlen($Childs1)-1);
+ $Tmp = treeParent($item['section_id']);
+ $ListNetNode = netViewNode($item['section_id']);
+ 
+ $dbtree1->Branch($item['section_id'],array('section_id','section_level'),array('AND'=>array('FIND_IN_SET(10,A.perm)>0','A.section_id!='.$item['section_id'])),FALSE,'');
+ $abc = $dbtree1->RecordCount();
+
+ $Tmp = netNodeDet($item['section_id']);
+ $Href = $ShowMenu = $ShowMenuAdm = $IsPermission = $IsID = $Type = $IsHref = '';
+
+ if($Tmp['display_text']!='root'){
+ $IsID = tr('STR_MENU_NODE_MODE_'.$Tmp['is_id']);
+ $Type = tr('STR_MENU_NODE_TYPE_'.$Tmp['type']);
+ $ShowMenu = ($Tmp['show_menu']==0)?'-':'+';
+ $ShowMenuAdm = ($Tmp['show_menu_adm']==0)?'-':'+';
+ $IsHref = $Tmp['is_href'];
+ $IsPermission = ($Tmp['is_permission']==0)?'-':'+';
+  
+  $Href .= 
+  myIcon(array('icon' => 'ui-icon-document', 'onclick' => 'dialogAddNode({\'node_id\' : \''.$item['section_id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})')).
+  myIcon(array('icon' => 'ui-icon-pencil', 'onclick' => 'dialogAddNode({\'node_id\' : \''.$item['section_id'].'\', \'sub-action\' : \'change\', \'redirect\' : \'?SubId='.$SubId.'\'})')).
+  myIcon(array('icon' => 'ui-icon-refresh', 'onclick' => 'dialogMoveNode({\'node_id\' : \''.$item['section_id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})')).
+  myIcon(array('icon' => 'ui-icon-trash', 'onclick' => 'window.location.href=\'?getAction=delNode&amp;NodeID='.$item['section_id'].'&amp;SubId='.$SubId.'\''));
+  }
+  else{
+  $Href = myIcon(array('icon' => 'ui-icon-document', 'onclick' => 'dialogAddNode({\'node_id\' : \''.$item['section_id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})'));
+  }
+
+  //<td class="table-row1">'.str_repeat('&nbsp;1', 4 * $item['section_level']).TextFromDB($Tmp['display_text']).'</td>
+ $Left = $item['section_level'] * 10;
+ $Color = 0 + (int)$item['section_level']*40;
+ echo'
+ <tr>
+ <td class="table-row1">'.$Nr.'</td>
+ <td class="table-row1">'.$item['section_id'].'</td>
+ <td class="table-row1">'.$TotalChilds.'</td>
+ <td class="table-row1"><span class="nested" style="margin-left:'.$Left.'px;color: rgb('.$Color.','.$Color.','.$Color.');">'.TextFromDB($Tmp['display_text']).'</span></td>
+ ';
+ foreach($MYVAR['LANGS'] as $Lang){
+ $Query = "SELECT text FROM ".$MYVAR['MYSQL']['PREFIX']."menu_lang WHERE menu_id='".$item['section_id']."' AND lang_id='".$Lang['VALUE']."'";
+ $Ds=$SQL->Select($Query);
+  if($Ds)$Text = TextFromDB($Ds[0]['text']);
+  else $Text = '';
+ echo'<td class="table-row1">'.$Text.'</td>';
+ }
+ echo '
+ <td class="table-row1">'.$IsID.'</td>
+ <td class="table-row1">'.$Type.'</td>
+ <td class="table-row1">'.$IsHref.'</td>
+ <td class="table-row1">'.$IsPermission.'</td>
+ <td class="table-row1">'.$ShowMenu.'</td>
+ <td class="table-row1">'.$ShowMenuAdm.'</td>
+ <td class="table-row1 text-nowrap">'.$Href.'</td>
+ </tr>
+ ';
+ $Nr++;
+ }
+echo'
+<tr><td class="table-row1" colspan="'.$Colspan.'">'.tr('STR_MENU_BOTTOM_STRING').'</td></tr>
+</table>
+';
+
+
+
+
+?>

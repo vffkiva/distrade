@@ -1,0 +1,103 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0 ) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 100;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+
+$Filter = array(
+	'key' => $SubId,
+	'text' => '',
+	'query' => '',
+	'if' => '',
+		'fields' => actionGetFilterFields(array('key' => $SubId))
+	);
+ if(!empty($Filter['fields']))$Filter['text'] = tr('STR_FILTER_SET');
+ if(isset($Filter['fields']['name']))$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.name LIKE '".(string)$Filter['fields']['name']."'":" t1.name LIKE '".(string)$Filter['fields']['name']."'";
+ if(isset($Filter['fields']['type_id']))$Filter['query']= ($Filter['query']!='')?$Filter['query']." AND t1.type_id=".(int)$Filter['fields']['type_id'] : " t1.type_id=".(int)$Filter['fields']['type_id'];
+$Filter['if'] = ($Filter['query']!='')?" WHERE ".$Filter['query']:""; 
+
+
+
+$Query = "
+SELECT t1.*,t2.type 
+FROM ".$MYVAR['MYSQL']['PREFIX']."users_list AS t1 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."users_types AS t2 ON t1.type_id=t2.id".$Filter['if']." 
+ORDER BY t2.type, t1.type_id, t1.username
+";
+
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+  for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+
+$Colspan = 10;
+ echo '
+ <table class="table-class1 width100p">
+ <tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+ <tr>
+ <td class="table-row2 bold">#</td>
+ <td class="table-row2 bold">'.tr('STR_USER_TYPE').'</td>
+ <td class="table-row2 bold">'.tr('STR_NAME').'</td>
+ <td class="table-row2 bold">'.tr('STR_USERNAME').'</td>
+ <td class="table-row2 bold">'.tr('STR_EMAIL').'</td>
+ <td class="table-row2 bold">'.tr('STR_BLOCK_STATUS').'</td>
+ <td class="table-row2 bold">'.tr('STR_CREATE').'</td>
+ <td class="table-row2 bold">'.tr('STR_UPDATE').'</td>
+ <td class="table-row2 width50"><!----></td>
+ </tr>  
+ <tr><td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text' => tr('BTTN_ADD'),'onclick' => 'dialogAddUser({\'redirect\' : \'?SubId='.$SubId.'\'});')).'
+ '.myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'width\' : \'500\', \'height\' : \'250\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text'].'
+ </td></tr>
+ ';
+ if(empty($Ds))echo'<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+  
+  foreach($Ds AS $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  $Class = ($Value['type'] == 'admin')?"table-row-red1":"table-row1";
+
+  $DelHref = (userPermission('168')) ? myIcon(array('icon' => 'ui-icon-trash', 'onclick' => 'actionDeleteUser({\'redirect\' : \'?SubId='.$SubId.'\', \'user_id\' : \''.$Value['id'].'\'})')) : '';
+  $EditHref = (userPermission('169')) ? myIcon(array('icon' => 'ui-icon-pencil', 'onclick' => 'dialogAddUser({\'user_id\' : \''.$Value['id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})')) : '';
+  
+  $ViewHref = myIcon(array('icon' => 'ui-icon-search','onclick' => 'dialogViewUser({\'user_id\' : \''.$Value['id'].'\', \'title\' : \''.TextFromDBJS($Value['name']).'\'})'));
+  $Created = myCreateUpdateDate($Value['create_user'], $Value['create_date']);
+  $Updated = myCreateUpdateDate($Value['update_user'], $Value['update_date']);
+  
+  echo' 
+  <tr>
+  <td class="'.$Class.'">'.$ShowNr.'</td>
+  <td class="'.$Class.'">'.$Value['type'].'</td>
+  <td class="'.$Class.'">'.$Value['name'].'</td>
+  <td class="'.$Class.'">'.$Value['username'].'</td>
+  <td class="'.$Class.'">'.$Value['e_mail'].'</td>
+  <td class="'.$Class.'">'.tr('STR_BLOCK_STATUS_'.$Value['block_status']).'</td>
+  <td class="'.$Class.'">'.$Created.'</td>
+  <td class="'.$Class.'">'.$Updated.'</td>
+  <td class="text-nowrap '.$Class.'">'.$ViewHref.' '.$EditHref.' '.$DelHref.' </td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  }
+ 
+ }
+ echo'
+ <tr><td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text' => tr('BTTN_ADD'),'onclick' => 'dialogAddUser({\'redirect\' : \'?SubId='.$SubId.'\'});')).'
+ '.myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'width\' : \'500\', \'height\' : \'250\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text'].'
+ </td></tr>
+ </table>
+ <script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'/scripts/users.js"></script>
+ '; 
+?>

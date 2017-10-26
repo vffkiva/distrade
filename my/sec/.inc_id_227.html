@@ -1,0 +1,133 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0 ) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 200;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+
+$Filter = array(
+	'key' => $SubId,
+	'text' => '',
+	'query' => '',
+	'if' => '',
+	'fields' => actionGetFilterFields(array('key' => $SubId))
+	);
+
+ if(!empty($Filter['fields']))$Filter['text'] = tr('STR_FILTER_SET');
+ if(isset($Filter['fields']['product']))$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.product LIKE '".(string)$Filter['fields']['product']."'":" t1.product LIKE '".(string)$Filter['fields']['product']."'";
+ if(isset($Filter['fields']['manufacturer_id']))$Filter['query']= ($Filter['query']!='')?$Filter['query']." AND t1.manufacturer_id=".(int)$Filter['fields']['manufacturer_id'] : " t1.manufacturer_id=".(int)$Filter['fields']['manufacturer_id'];
+$Filter['if'] = ($Filter['query']!='')?" AND ".$Filter['query']:""; 
+
+
+$Data = array(
+	'buttons' => 
+	myButton(array('text'=>tr('BTTN_ADD',0),'onclick'=>'dialogAddProduct({\'redirect\' : \'?SubId='.$SubId.'\'});')).' '.
+	myButton(array('text'=>tr('BTTN_IMPORT',0),'onclick'=>'dialogImport({\'redirect\' : \'?SubId='.$SubId.'\', \'item\' : \'products\'});')).' '.
+	myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'width\' : \'500\', \'height\' : \'250\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text']
+);
+
+$Query = "
+SELECT t1.*,t2.name AS manufacturer FROM ".$MYVAR['MYSQL']['PREFIX']."products AS t1 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."manufacturers AS t2 ON t1.manufacturer_id=t2.manufacturer_id AND t2.lang_id=".(int)$MYVAR['LANG_ID']." 
+WHERE t1.lang_id=".(int)$MYVAR['LANG_ID'].$Filter['if']."
+ORDER BY t2.name,t1.product
+";
+
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+  for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+
+$Colspan = 24;
+ echo '
+ <table class="table-class1 width100p">
+ <tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+ <tr>
+ <td class="table-row2 bold">#</td>
+ <td class="table-row2 bold">'.tr('STR_ARTICLE').'</td>
+ <td class="table-row2 bold">'.tr('STR_MANUFACTURER').'</td>
+ <td class="table-row2 bold">'.tr('STR_PACKAGING').'</td>
+ <td class="table-row2 bold">'.tr('STR_PRODUCT').'</td>
+ <td class="table-row2 bold">'.tr('STR_WEIGHT_NETTO').'</td>
+ <td class="table-row2 bold">'.tr('STR_ITEMS_PER_BOX').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_WEIGHT_NETTO').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_WEIGHT_BRUTTO').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_PER_PALETE').'</td>
+ <td class="table-row2 bold">'.tr('STR_CUSTOMS_CODE').'</td>
+ <td class="table-row2 bold">'.tr('STR_BEST_BEFORE').'</td>
+ <td class="table-row2 bold">'.tr('STR_CODE_ITEM').'</td>
+ <td class="table-row2 bold">'.tr('STR_CODE_BOX').'</td>
+ <td class="table-row2 bold">'.tr('STR_ITEM_LENGTH').'</td>
+ <td class="table-row2 bold">'.tr('STR_ITEM_WIDTH').'</td>
+ <td class="table-row2 bold">'.tr('STR_ITEM_HEIGHT').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_LENGTH').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_WIDTH').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_HEIGHT').'</td>
+ <td class="table-row2 bold">'.tr('STR_BOX_PER_LAYER').'</td>
+ <td class="table-row2 bold">'.tr('STR_TOTAL_LAYERS').'</td>
+ <td class="table-row2 bold">'.tr('STR_PALETE_HEIGHT').'</td>
+ <td class="table-row2 width50"><!----></td>
+ </tr>  
+ <tr><td class="table-row-footer" colspan="'.$Colspan.'">'.$Data['buttons'].'</td></tr>
+ ';
+ if(empty($Ds))echo'<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+  
+  foreach($Ds AS $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  $EditHref = (userPermission('226')) ? myIcon(array('icon' => 'ui-icon-pencil', 'onclick' => 'dialogAddProduct({\'product_id\' : \''.$Value['product_id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})')) : '';
+  $DelHref = (userPermission('284')) ? myIcon(array('icon' => 'ui-icon-trash', 'onclick' => 'actionDeleteProduct({\'redirect\' : \'?SubId='.$SubId.'\', \'product_id\' : \''.$Value['product_id'].'\'})')) : '';
+  
+  $Style='';
+   if((int)$Value['block_status'] == 1)$Style=' style="background-color:rgb(225,196,168);"';
+  echo' 
+  <tr>
+  <td class="table-row1"'.$Style.'>'.$ShowNr.'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['article'].'</td>
+  <td class="table-row1"'.$Style.'>'.strhtml($Value['manufacturer']).'</td>
+  <td class="table-row1"'.$Style.'>'.tr('STR_PACKAGING_'.$Value['packaging']).'</td>
+  <td class="table-row1"'.$Style.'>'.strhtml($Value['product']).'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['netto'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['items_per_box'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['netto_box'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['brutto_box'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['box_per_palete'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['customs_code'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['best_before'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['code_item'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['code_box'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['item_length'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['item_width'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['item_height'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['box_length'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['box_width'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['box_height'].'</td>  
+  <td class="table-row1"'.$Style.'>'.$Value['box_per_layer'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['total_layers'].'</td>
+  <td class="table-row1"'.$Style.'>'.$Value['palete_height'].'</td>
+  <td class="table-row1 text-nowrap"'.$Style.'>'.$EditHref.' '.$DelHref.'</td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  }
+ 
+ }
+ echo'
+<tr><td class="table-row-footer" colspan="'.$Colspan.'">'.$Data['buttons'].'</td></tr>
+ </table>
+ <script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/products.js"></script>
+ <script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/export_import.js"></script>
+ ';
+
+ 
+?>

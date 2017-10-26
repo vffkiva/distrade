@@ -1,0 +1,90 @@
+<?php
+$Banner = 'default';
+
+ if(isset($MYVAR['SUB_ID'])){
+ $Query = "SELECT top_slider FROM ".$MYVAR['MYSQL']['PREFIX']."sections WHERE sub_id=".(int)$MYVAR['SUB_ID']." AND lang_id=".(int)$MYVAR['LANG_ID'];
+ $Ds=$SQL->Select($Query);
+  if(!empty($Ds) && $Ds[0]['top_slider'] != '')$Banner = $Ds[0]['top_slider'];
+ } 
+
+ if($Banner == 'default'){
+ $Query = "
+SELECT t1.gallery_id,t2.picture,t3.title,t3.text FROM ".$MYVAR['MYSQL']['PREFIX']."gallery AS t1 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."pictures AS t2 ON t1.gallery_id=t2.module_id AND t2.module='gallery' 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."picture_text AS t3 ON t2.id=t3.picture_id AND t3.lang_id=".(int)$MYVAR['LANG_ID']." 
+WHERE t1.lang_id=".(int)$MYVAR['LANG_ID']." AND t1.is_banner=1
+ ";
+ }
+ if(!in_array($Banner,array('default','none'))){
+ $Query = "
+SELECT t1.gallery_id,t2.picture,t3.title,t3.text FROM ".$MYVAR['MYSQL']['PREFIX']."gallery AS t1 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."pictures AS t2 ON t1.gallery_id=t2.module_id AND t2.module='gallery' 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."picture_text AS t3 ON t2.id=t3.picture_id AND t3.lang_id=".(int)$MYVAR['LANG_ID']." 
+WHERE t1.lang_id=".(int)$MYVAR['LANG_ID']." AND t1.gallery_id=".(int)$Banner
+ ;
+ }
+
+ 
+ if($Banner != 'none'){
+ $Ds=$SQL->Select($Query);
+
+
+ if(!empty($Ds)){
+ echo '
+ <div id="header">
+  <div class="center">
+   
+   <div class="slider">
+ ';   
+  foreach($Ds as $Key => $Value){
+  $Style = (@file_exists($MYVAR['ROOT'].$Value['picture'])) ? ' style="background: url('.$Value['picture'].') center center no-repeat transparent;"' : '';
+  $Title = ($Value['title'] != '') ? '<div class="title">'.TextFromDB($Value['title']).'</div>' : '';
+  $Text = ($Value['text'] != '') ? '<div class="text">'.TextFromDB($Value['text']).'</div>' : '';
+  echo '
+  	<div class="slide">
+	 <div class="image"'.$Style.'><!----></div>
+	 '.$Title.'
+	 '.$Text.'
+    </div>
+  ';
+  }
+ echo'
+	<div class="left"><!----></div>
+	<div class="right"><!----></div>
+	</div>
+   </div>
+   
+  </div>
+ ';  
+ }
+}
+/* 
+ <div id="header">
+  <div class="center">
+   
+   <div class="slider">
+    
+	<div class="slide">
+	 <div class="image" style="background: url(/img/banner1.jpg) center center no-repeat transparent;"></div>
+	 <div class="title"> Here comes some title Here comes some title</div>
+	 <div class="text">Here comes some textual description if you want some bla bla bla</div>
+    </div>
+   
+    <div class="slide">
+	 <div class="image" style="background: url(/img/banner2.jpg) center center no-repeat transparent;"></div>
+	 <div class="title"> Here comes some title Here comes some title2</div>
+	 <div class="text">Here comes some textual description if you want some bla bla bla2</div>
+    </div>
+
+    <div class="slide">
+	 <div class="image" style="background: url(/img/banner3.jpg) center center no-repeat transparent;"></div>
+    </div>
+    
+	<div class="left"><!----></div>
+	<div class="right"><!----></div>
+	</div>
+   </div>
+   
+  </div>
+ */
+?>

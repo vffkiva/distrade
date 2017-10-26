@@ -1,0 +1,138 @@
+<?php
+//-------------------------------------------------------------------------------
+//ACTION: save gallery
+//-------------------------------------------------------------------------------
+ if($action == 'actionSaveGallery'){
+ $Data = array(
+ 'gallery_id' => (isset($_REQUEST['GalleryID']) && $_REQUEST['GalleryID'] != '') ? $_REQUEST['GalleryID'] : '',
+ 'galleries' => array(),
+ 'pictures' => array(),
+ 'total_pictures' => $_REQUEST['TotalPictures'],
+ 'readonly' => (isset($_REQUEST['ReadOnly']) && $_REQUEST['ReadOnly'] != '') ? $_REQUEST['ReadOnly'] : '',
+ 'is_banner' => (isset($_REQUEST['IsBanner']) && $_REQUEST['IsBanner'] != '') ? $_REQUEST['IsBanner'] : '',
+ 'preview_count' => $_REQUEST['PreviewCount'],
+ 'preview_width' => $_REQUEST['Width'],
+ 'preview_height' => $_REQUEST['Height']
+ );
+  
+  foreach($MYVAR['LANGS'] as $Key => $Lang){
+  $Name = TextToDB($_REQUEST['Name_'.$Key]);
+  $Description = TextToDB($_REQUEST['Description_'.$Key]);
+  $BlockStatus = $_REQUEST['BlockStatus_'.$Key];
+  $ThisGalleryID = $_REQUEST['ThisGalleryID_'.$Key];
+  
+  $Data['galleries'][] = array('lang_id' => $Lang['VALUE'], 'name' => $Name, 'description' => $Description, 'block_status' => $BlockStatus, 'gallery_id' => $ThisGalleryID);
+  }
+
+  for($i=0;$i<$Data['total_pictures'];$i++){
+  $Data['pictures'][$i] = array('src' => $_REQUEST['Picture_'.$i.'_source'], 'info' => array());
+   foreach($MYVAR['LANGS'] as $Key => $Value){
+   $Title = $_REQUEST['Picture_'.$i.'_title_'.$Key];
+   $Text = $_REQUEST['Picture_'.$i.'_text_'.$Key];
+   $LangID = $_REQUEST['Picture_'.$i.'_lang_id_'.$Key];
+    if($Text != '' || $Title != '') $Data['pictures'][$i]['info'][] = array('title' => $Title, 'text' => $Text, 'lang_id' => $LangID);
+   }
+  }
+  
+  if(empty($Data['pictures'])) $Error = tr('MSG_NO_IMAGES_SELECTED',0);
+
+  if($Error != '')$Out['message'] = array('type' => 'error', 'text' => $Error);
+  else {
+
+   if($Data['gallery_id'] == ''){
+   $Query = "SELECT MAX(gallery_id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."gallery";
+   $Ds=$SQL->Select($Query);
+    if(empty($Ds))$Data['gallery_id'] = 0;
+    else $Data['gallery_id'] = (int)$Ds[0]['id']+1;
+   }
+    
+   foreach($Data['galleries'] as $Key => $Value){
+    if($Value['gallery_id'] == ''){
+    $Query = "
+    INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."gallery SET gallery_id=".(int)$Data['gallery_id'].",lang_id=".$Value['lang_id'].", name='".$Value['name']."',description='".$Value['description']."',
+    block_status=".(int)$Value['block_status'].",readonly=".(int)$Data['readonly'].",is_banner=".(int)$Data['is_banner'].",
+	preview_count='".$Data['preview_count']."',preview_width=".(int)$Data['preview_width'].",preview_height=".(int)$Data['preview_height'].",create_date=NOW(),create_user=".(int)$MYVAR['USER']['ID']
+	;
+    $Ds=$SQL->Insert($Query);
+    }
+    else {
+    $Query = "
+    UPDATE ".$MYVAR['MYSQL']['PREFIX']."gallery SET name='".$Value['name']."',description='".$Value['description']."', block_status=".(int)$Value['block_status'].",readonly=".(int)$Data['readonly'].",
+    is_banner=".(int)$Data['is_banner'].",preview_count='".$Data['preview_count']."',preview_width=".(int)$Data['preview_width'].",preview_height=".(int)$Data['preview_height'].",
+	update_date=NOW(),update_user=".(int)$MYVAR['USER']['ID']." WHERE id=".(int)$Value['gallery_id']
+    ;
+    $Ds=$SQL->Update($Query);
+    }   
+   }
+   
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='gallery' AND module_id=".(int)$Data['gallery_id'];
+   $Ds=$SQL->Delete($Query);
+
+   $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id IN (SELECT id FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='gallery' AND module_id=".(int)$Data['gallery_id'].")";
+   $Ds=$SQL->Delete($Query);
+   
+   
+   foreach($Data['pictures'] as $Key => $Value){
+   $Query = "INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."pictures SET module='gallery', module_id=".(int)$Data['gallery_id'].", picture='".$Value['src']."'";
+   $Ds=$SQL->Insert($Query);
+   
+   $Query = "SELECT MAX(id) AS id FROM ".$MYVAR['MYSQL']['PREFIX']."pictures";
+   $Ds=$SQL->Select($Query);
+   $PictureID = $Ds[0]['id'];
+   
+    foreach($Value['info'] as $Key1 => $Value1){
+    $Query = "
+	INSERT INTO ".$MYVAR['MYSQL']['PREFIX']."picture_text SET picture_id=".(int)$PictureID.",lang_id=".(int)$Value1['lang_id'].",
+	title='".$Value1['title']."',text='".$Value1['text']."'
+	";
+    $Ds=$SQL->Insert($Query);
+    }
+   }
+  WriteToSession('message',json_encode(array('type' => 'info', 'mode' => 'prompt', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+
+
+
+ 
+//-------------------------------------------------------------------------------
+//ACTION: block galleries
+//-------------------------------------------------------------------------------
+ if($action == 'actionBlockGalleries'){
+ $Data = array(
+ 'block_status' => (isset($_REQUEST['BlockStatus']) && $_REQUEST['BlockStatus'] != '') ? $_REQUEST['BlockStatus'] : '',
+ 'total_fields' => (isset($_REQUEST['TotalFields']) && $_REQUEST['TotalFields'] != '') ? $_REQUEST['TotalFields'] : ''
+ );
+ 
+  if($Data['block_status'] != ''){
+   for($i=0;$i<(int)$Data['total_fields'];$i++){
+   $GalleryID = (isset($_REQUEST['Gallery_'.$i]) && $_REQUEST['Gallery_'.$i] != '') ? $_REQUEST['Gallery_'.$i] : '';
+
+    if($GalleryID != ''){
+    $Query = "UPDATE ".$MYVAR['MYSQL']['PREFIX']."gallery SET block_status=".(int)$Data['block_status'].",update_user=".(int)$MYVAR['USER']['ID'].",update_date=NOW() WHERE id=".(int)$GalleryID;
+    $Ds=$SQL->Update($Query);
+    }
+   } 
+  WriteToSession('message',json_encode(array('type' => 'info', 'text' => tr('MSG_DATA_SAVE_COMPLETE',0))));
+  }
+ }
+ 
+//-------------------------------------------------------------------------------
+//ACTION: delete news
+//-------------------------------------------------------------------------------  
+ if($action == 'actionDeleteGallery' && userPermission('254')){
+ $Data = array(
+ 'gallery_id' => (isset($_REQUEST['GalleryID']) && $_REQUEST['GalleryID'] != '') ? $_REQUEST['GalleryID'] : ''
+ );
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."gallery WHERE gallery_id=".(int)$Data['gallery_id'];
+ $Ds=$SQL->Delete($Query);
+  
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='gallery' AND module_id=".(int)$Data['gallery_id'];
+ $Ds=$SQL->Delete($Query);
+  
+ $Query = "DELETE FROM ".$MYVAR['MYSQL']['PREFIX']."picture_text WHERE picture_id IN (SELECT id FROM ".$MYVAR['MYSQL']['PREFIX']."pictures WHERE module='gallery' AND module_id=".(int)$Data['gallery_id'].")";
+ $Ds=$SQL->Delete($Query);
+ }
+ 
+ 
+?>

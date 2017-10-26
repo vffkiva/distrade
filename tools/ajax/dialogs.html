@@ -1,0 +1,30 @@
+<?php
+//-----------------------------------------------------------------------------------
+//DIALOG: user login
+//-----------------------------------------------------------------------------------  
+ if($action == 'dialogUserLogin'){
+ $Data = array(
+ 'email' => '',
+ 'password' => '',
+ 'dialog_title' => tr('STR_TITLE_AUTHORIZATION',0)
+ );
+ 
+ $tmpOut = '
+ <form name="ActionForm" method="post" id="ActionForm">
+ <table class="login">
+ <tr><td colspan="2" id="login-message"></td></tr>
+ <tr>
+ <td>'.tr('STR_YOUR_EMAIL').'</td>
+ <td><span id="status-email"><input type="text" name="email" value="'.$Data['email'].'" class="design width200" /> *</span></td>
+ </tr> 
+ <tr>
+ <td>'.tr('STR_YOUR_PASSWORD').'</td>
+ <td><span id="status-password"><input type="password" name="password" value="'.$Data['password'].'" class="design width200" /> *</span></td>
+ </tr>
+ ';
+ $Out['dialog']['text'] = $tmpOut;
+ $Out['dialog']['title'] = $Data['dialog_title'];
+ }
+ 
+
+?>

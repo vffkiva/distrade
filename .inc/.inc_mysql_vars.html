@@ -1,0 +1,83 @@
+<?php
+//---------------------------------------------------------------------------------
+//MySQL variables
+//---------------------------------------------------------------------------------
+$MYVAR['MYSQL']['DB'] = "wwwdistraderu";
+$MYVAR['MYSQL']['USER'] = "distrade";
+$MYVAR['MYSQL']['PASS'] = "evroPass";
+$MYVAR['MYSQL']['HOST'] = "localhost";
+$MYVAR['MYSQL']['PREFIX'] = "db_";
+$SQL = new mysql_class($MYVAR['MYSQL']['USER'],$MYVAR['MYSQL']['PASS'],$MYVAR['MYSQL']['HOST'],$MYVAR['MYSQL']['DB']);
+
+
+//---------------------------------------------------------------------------------
+//Create variables
+//---------------------------------------------------------------------------------
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."settings_vars ORDER BY var";
+$Ds=$SQL->Select($Query);
+ if($Ds){
+ $NR=$SQL->rows;
+ $CR=0;
+  while($CR<$NR){
+  $MYVAR['VARS'][$Ds[$CR]['var']] = $Ds[$CR]['value'];
+  $CR++;
+  }
+ }
+
+$MYVAR['LANGS'] = Table2Arr("SELECT id,lang_short AS lang, lang_system,lang_short,lang_long,img FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE block_status='0' ORDER BY lang_system","lang","id","lang_system|lang_short|lang_long");
+ foreach($MYVAR['LANGS'] AS $Key => $Value){
+ $MYVAR['LANGS'][$Key]['img'] = (@file_exists($MYVAR['ROOT'].'img/flags/'.strtolower($Value['lang_system']).'.png')) ? $MYVAR['HTTP'].'img/flags/'.strtolower($Value['lang_system']).'.png' : '';
+ }
+
+ if (@file_exists($_SERVER['DOCUMENT_ROOT'].'/cache/tr_cache.html')) include_once $_SERVER['DOCUMENT_ROOT'].'/cache/tr_cache.html';
+
+$MYVAR['LANG'] = ($MYVAR['LANG']=='') ? $MYVAR['VARS']['default_language'] : $MYVAR['LANG'];
+$MYVAR['LANG_IMG'] = (@file_exists($MYVAR['ROOT'].'img/flags/'.strtolower($MYVAR['LANG']).'.png')) ? $MYVAR['HTTP'].'img/flags/'.strtolower($MYVAR['LANG']).'.png' : '';
+$Query = "SELECT * FROM ".$MYVAR['MYSQL']['PREFIX']."lang WHERE lang_system LIKE '".$MYVAR['LANG']."'";
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $MYVAR['LANG_ID'] = $Ds[0]['id'];
+ $MYVAR['LANG_LONG'] = $Ds[0]['lang_long'];
+ }
+
+$MYVAR['START_SUB_ID'] = '';
+$Query = "
+SELECT t1.type_id,t1.start_subid,t2.start_subid AS type_start_subid 
+FROM ".$MYVAR['MYSQL']['PREFIX']."users_list AS t1 
+LEFT JOIN ".$MYVAR['MYSQL']['PREFIX']."users_types AS t2 ON t1.type_id=t2.id 
+WHERE t1.id=".(int)$MYVAR['USER']['ID']
+;
+$Ds=$SQL->Select($Query);
+ if(!empty($Ds)){
+ $MYVAR['USER']['GROUP_ID'] = $Ds[0]['type_id'];
+  if($Ds[0]['start_subid'] != '') $MYVAR['USER']['START_SUB_ID'] = $Ds[0]['start_subid'];
+  if($MYVAR['START_SUB_ID'] == '' && $Ds[0]['type_start_subid'] != '') $MYVAR['USER']['START_SUB_ID'] = $Ds[0]['type_start_subid'];
+ }
+
+
+$MYVAR['SUB_ID'] = '';
+$MYVAR['MODULE_ID'] = '';
+
+ if(isset($_REQUEST['_page']) || isset($_REQUEST['_news']) || isset($_REQUEST['_module']) || isset($_REQUEST['_product'])){
+  if(isset($_REQUEST['_page'])){
+  $MYVAR['SUB_ID'] = $_REQUEST['_page'];
+  }
+
+  if(isset($_REQUEST['_news'])){
+  $MYVAR['SUB_ID'] = '243';
+  $MYVAR['MODULE_ID'] = $_REQUEST['_news'];
+  }
+
+  if(isset($_REQUEST['_module'])){
+  $MYVAR['SUB_ID'] = '249';
+  $MYVAR['MODULE_ID'] = $_REQUEST['_module'];
+  }
+
+  if(isset($_REQUEST['_product'])){
+  $MYVAR['SUB_ID'] = '267';
+  $MYVAR['MODULE_ID'] = $_REQUEST['_product'];
+  }
+ }
+ if($MYVAR['USER']['START_SUB_ID'] != '' && $MYVAR['SUB_ID'] == '')$MYVAR['SUB_ID'] = $MYVAR['USER']['START_SUB_ID'];
+ 
+?>

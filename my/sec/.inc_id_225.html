@@ -1,0 +1,95 @@
+<?php
+$ShowTitle = netViewTree($SubId);
+
+$Pager = array();
+$Pager['page'] = (!isset($_REQUEST['p']) || (int)$_REQUEST['p'] <= 0 ) ? 1 : (int)$_REQUEST['p'];
+$Pager['per_page'] = 200;
+$Pager['offset'] = ($Pager['page']-1)*$Pager['per_page'];
+$Pager['total'] = 0;
+
+
+$Filter = array(
+	'key' => $SubId,
+	'text' => '',
+	'query' => '',
+	'if' => '',
+		'fields' => actionGetFilterFields(array('key' => $SubId))
+	);
+ if(!empty($Filter['fields']))$Filter['text'] = tr('STR_FILTER_SET');
+ if(isset($Filter['fields']['name']))$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.name LIKE '".(string)$Filter['fields']['name']."'":" t1.name LIKE '".(string)$Filter['fields']['name']."'";
+$Filter['if'] = ($Filter['query']!='')?" AND ".$Filter['query'] : ''; 
+
+$Query = "SELECT t1.* FROM ".$MYVAR['MYSQL']['PREFIX']."manufacturers AS t1 WHERE lang_id=".(int)$MYVAR['LANG_ID'].$Filter['if']." ORDER BY t1.name";
+$Ds=$SQL->Select($Query);
+$Pager['total'] = count($Ds);
+$Pager['numbers'] = array();
+  for($i=0;$i<$Pager['total'];$i++)$Pager['numbers'][$i] = $i;
+
+$Colspan = 9;
+ echo '
+ <table class="table-class1 width100p">
+ <tr><td class="table-row-header" colspan="'.$Colspan.'">'.$ShowTitle.'</td></tr>
+ <tr>
+ <td class="table-row2 bold">#</td>
+ <td class="table-row2 bold">'.tr('STR_MANUFACTURER').'</td>
+ <td class="table-row2 bold">'.tr('STR_MANUFACTURER_ID').'</td>
+ <td class="table-row2 bold">'.tr('STR_COUNTRY').'</td>
+ <td class="table-row2 bold">'.tr('STR_COUNTRY_CODE').'</td>
+ <td class="table-row2 bold">'.tr('STR_COUNTRY_ISO').'</td>
+ <td class="table-row2 bold">'.tr('STR_BLOCK_STATUS').'</td>
+ <td class="table-row2 bold">'.tr('STR_NOTES').'</td>
+ <td class="table-row2 width50"><!----></td>
+ </tr>  
+ <tr>
+ <td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>tr('BTTN_ADD',0),'onclick'=>'dialogAddManufacturer({\'redirect\' : \'?SubId='.$SubId.'\'});')).'
+ '.myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text'].'
+ </td>
+ </tr>
+ ';
+ if(empty($Ds))echo'<tr><td class="table-row1 text-center" colspan="'.$Colspan.'">'.tr('STR_EMPTY_LIST').'</td></tr>';
+ else {
+ $Ds = array_slice($Ds,$Pager['offset'],$Pager['per_page']);
+  
+  foreach($Ds AS $Key => $Value){
+  $ShowNr=(($Key+1)+($Pager['page']*$Pager['per_page'])-$Pager['per_page']);
+  $DelHref = '';
+  $EditHref = '';
+
+  //$DelHref = myIcon(array('icon' => 'ui-icon-trash', 'onclick' => 'window.location=\'?SubId='.$SubId.'&amp;getAction=delClient&amp;ClientID='.$Value['id'].'\''));
+  $EditHref = (userPermission('226')) ? myIcon(array('icon' => 'ui-icon-pencil', 'onclick' => 'dialogAddManufacturer({\'manufacturer_id\' : \''.$Value['manufacturer_id'].'\', \'redirect\' : \'?SubId='.$SubId.'\'})')) : '';
+  //$ViewHref = myIcon(array('icon' => 'ui-icon-search','onclick' => 'dialogViewClient({\'user_id\' : \''.$Value['id'].'\', \'title\' : \''.TextFromDBJS($Value['name']).'\'})'));
+  echo' 
+  <tr>
+  <td class="table-row1">'.$ShowNr.'</td>
+  <td class="table-row1">'.TextFromDB($Value['name']).'</td>
+  <td class="table-row1">'.$Value['manufacturer_id'].'</td>
+  <td class="table-row1">'.TextFromDB($Value['country']).'</td>
+  <td class="table-row1">'.TextFromDB($Value['country_numeric']).'</td>
+  <td class="table-row1">'.TextFromDB($Value['country_iso']).'</td>
+  <td class="table-row1">'.tr('STR_BLOCK_STATUS_'.$Value['block_status']).'</td>
+  <td class="table-row1">'.TextFromDB($Value['notes']).'</td>
+  <td class="table-row1 text-nowrap">'.$EditHref.'</td>
+  </tr>
+  ';
+  }
+  
+  if($Pager['total'] > $Pager['per_page']){
+  echo '<tr><td class="table-row2" colspan="'.$Colspan.'">Page: ';
+  $pager = new Pager($Pager['numbers'],$Pager['per_page']);
+  $pager->printPageNumbers(array('current_page' => $Pager['page'], 'url' => '?SubId='.$SubId, 'class' => 'link-sub'));
+  echo '</td></tr>';
+  }
+ 
+ }
+ echo'
+ <tr><td class="table-row-footer" colspan="'.$Colspan.'">
+ '.myButton(array('text'=>tr('BTTN_ADD',0),'onclick'=>'dialogAddManufacturer({\'redirect\' : \'?SubId='.$SubId.'\'});')).'
+ '.myButton(array('text'=>tr('BTTN_FILTER',0),'onclick'=>'dialogShowFilter({\'key\' : \''.$Filter['key'].'\', \'redirect\' : \'?SubId='.$SubId.'\'});')).' '.$Filter['text'].'
+ </td></tr>
+ </table>
+ <script type="text/javascript" language="javascript" src="'.$MYVAR['HTTP'].'scripts/products.js"></script>
+ ';
+
+
+?>
