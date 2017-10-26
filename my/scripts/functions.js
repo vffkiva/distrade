@@ -386,3 +386,8 @@ var defaults = {'container' : null};
 var opts = $.extend(defaults, options);
 	if(opts['container'] != null)opts['container'].find('.ui-icon-close').unbind().bind('click', function(){$(this).parent().remove();});
 }
+
+
+function _log(object){
+console.log(object);
+}

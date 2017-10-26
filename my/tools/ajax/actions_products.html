@@ -167,6 +167,9 @@
 	update_date=NOW() 
 	WHERE id=".(int)$Data['row_'.$Key]
     ;
+
+    //echo $Query;
+    //exit;
     $Ds=$SQL->Update($Query);   
     }
    }

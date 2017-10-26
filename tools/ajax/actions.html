@@ -155,7 +155,7 @@
 //ACTION: get products
 //-----------------------------------------------------------------------------------  
  if($action == 'actionGetProducts'){
- $Data = array(
+  $Data = array(
  'country' => (isset($_REQUEST['Country']) && $_REQUEST['Country'] != '') ? $_REQUEST['Country'] : '',
  'manufacturer_id' => (isset($_REQUEST['Manufacturer']) && $_REQUEST['Manufacturer'] != '') ? $_REQUEST['Manufacturer'] : '',
  'type' => (isset($_REQUEST['Type']) && $_REQUEST['Type'] != '') ? $_REQUEST['Type'] : '',
@@ -215,7 +215,6 @@ $Filter['if'] = ($Filter['query']!='')?" AND ".$Filter['query']:"";
  WHERE t1.block_status=0 AND t1.lang_id=".(int)$MYVAR['LANG_ID'].$Filter['if']." 
  ORDER BY t2.name, t1.type, t1.product, t1.netto 
  ";
-//echo $Query;
  $Ds=$SQL->Select($Query);
  
   if(!empty($Ds)){

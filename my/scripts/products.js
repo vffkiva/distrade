@@ -30,7 +30,9 @@ var tags_arr = [];
 	tags_arr.push($(this).find('.text').html());
 	});
 	data['Tags'] = tags_arr.join(',');
-	
+
+	//_log(data);
+	//return;
 	
 	$.ajax({
 	data: data,
