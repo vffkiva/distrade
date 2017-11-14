@@ -31,6 +31,13 @@
  'total_layers' => '',
  'palete_height' => '',
  'block_status' => '',
+ 'opt_no_gluten' => 0,
+ 'opt_no_milk' => 0,
+ 'opt_no_eggs' => 0,
+ 'opt_no_sugar' => 0,
+ 'opt_no_sugar_all' => 0,
+ 'opt_bio' => 0,
+ 'opt_vegan' => 0,
  'notes' => '',
  'tags' => '',
  'image_list' => '',
@@ -79,7 +86,16 @@
     $Data['total_layers'] = $Ds[0]['total_layers'];
     $Data['palete_height'] = $Ds[0]['palete_height'];
     $Data['block_status'] = $Ds[0]['block_status'];
+    $Data['opt_no_gluten'] = (int)$Ds[0]['opt_no_gluten'];
+    $Data['opt_no_milk'] = (int)$Ds[0]['opt_no_milk'];
+    $Data['opt_no_eggs'] = (int)$Ds[0]['opt_no_eggs'];
+    $Data['opt_no_sugar'] = (int)$Ds[0]['opt_no_sugar'];
+    $Data['opt_no_sugar_all'] = (int)$Ds[0]['opt_no_sugar_all'];
+    $Data['opt_bio'] = (int)$Ds[0]['opt_bio'];
+    $Data['opt_vegan'] = (int)$Ds[0]['opt_vegan'];
     $Data['dialog_title'] = $Ds[0]['product'];
+
+
     $Data['notes'] = TextFromDBForm($Ds[0]['notes']);
     $Tmp = explode(',',trim($Ds[0]['tags']));
 	 foreach($Tmp as $SubKey => $Value){
@@ -229,6 +245,13 @@
  <tr><td>'.tr('STR_BOX_PER_LAYER').'</td><td><input type="text" name="BoxPerLayer" value="'.$Data['box_per_layer'].'" class="Design width100"/></td></tr>
  <tr><td>'.tr('STR_TOTAL_LAYERS').'</td><td><input type="text" name="TotalLayers" value="'.$Data['total_layers'].'" class="Design width100"/></td></tr>
  <tr><td>'.tr('STR_PALETE_HEIGHT').'</td><td><input type="text" name="PaleteHeight" value="'.$Data['palete_height'].'" class="Design width200"/></td></tr>
+ <tr><td>'.tr('STR_OPT_NO_GLUTEN').'</td><td><input type="checkbox" name="OptNoGluten" value="1" '.CheckBox('1', $Data['opt_no_gluten']).'"/></td></tr>
+ <tr><td>'.tr('STR_OPT_NO_MILK').'</td><td><input type="checkbox" name="OptNoMilk" value="1" '.CheckBox('1', $Data['opt_no_milk']).'"/></td></tr>
+ <tr><td>'.tr('STR_OPT_NO_EGGS').'</td><td><input type="checkbox" name="OptNoEggs" value="1" '.CheckBox('1', $Data['opt_no_eggs']).'"/></td></tr>
+ <tr><td>'.tr('STR_OPT_NO_SUGAR').'</td><td><input type="checkbox" name="OptNoSugar" value="1" '.CheckBox('1', $Data['opt_no_sugar']).'"/></td></tr>
+ <tr><td>'.tr('STR_OPT_NO_SUGAR_ALL').'</td><td><input type="checkbox" name="OptNoSugarAll" value="1" '.CheckBox('1', $Data['opt_no_sugar_all']).'"/></td></tr>
+ <tr><td>'.tr('STR_OPT_BIO').'</td><td><input type="checkbox" name="OptBio" value="1" '.CheckBox('1', $Data['opt_bio']).'"/></td></tr>
+ <tr><td>'.tr('STR_OPT_VEGAN').'</td><td><input type="checkbox" name="OptVegan" value="1" '.CheckBox('1', $Data['opt_vegan']).'"/></td></tr>
  <tr>
  <td>'.tr('STR_BLOCK_STATUS').'</td>
  <td>

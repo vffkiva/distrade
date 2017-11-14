@@ -161,6 +161,13 @@
  'type' => (isset($_REQUEST['Type']) && $_REQUEST['Type'] != '') ? $_REQUEST['Type'] : '',
  'horeca' => (isset($_REQUEST['Horeca']) && $_REQUEST['Horeca'] != '') ? $_REQUEST['Horeca'] : '',
  'tags' => (isset($_REQUEST['Tags']) && $_REQUEST['Tags'] != '') ? $_REQUEST['Tags'] : '',
+ 'opt_no_gluten' => !empty($_REQUEST['opt_no_gluten']) ? 1 : 0,
+ 'opt_no_milk' => !empty($_REQUEST['opt_no_milk']) ? 1 : 0,
+ 'opt_no_eggs' => !empty($_REQUEST['opt_no_eggs']) ? 1 : 0,
+ 'opt_no_sugar' => !empty($_REQUEST['opt_no_sugar']) ? 1 : 0,
+ 'opt_no_sugar_all' => !empty($_REQUEST['opt_no_sugar_all']) ? 1 : 0,
+ 'opt_bio' => !empty($_REQUEST['opt_bio']) ? 1 : 0,
+ 'opt_vegan' => !empty($_REQUEST['opt_vegan']) ? 1 : 0,
  'products' => array('html' => '', 'total' => 0, 'per_page' => 20, 'pager' => ''),
  'all_products' => array(),
  'products_filter' => array(),
@@ -179,6 +186,15 @@ $Filter = array(
  if($Data['manufacturer_id'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t2.manufacturer_id=".(int)$Data['manufacturer_id']:" t2.manufacturer_id=".(int)$Data['manufacturer_id'];
  if($Data['type'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.type LIKE '".$Data['type']."'":" t1.type LIKE '".$Data['type']."'";
  if($Data['horeca'] != '')$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.horeca=1":" t1.horeca=1";
+
+ if($Data['opt_no_gluten'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_no_gluten=1":" t1.opt_no_gluten=1";
+ if($Data['opt_no_milk'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_no_milk=1":" t1.opt_no_milk=1";
+ if($Data['opt_no_eggs'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_no_eggs=1":" t1.opt_no_eggs=1";
+ if($Data['opt_no_sugar'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_no_sugar=1":" t1.opt_no_sugar=1";
+ if($Data['opt_no_sugar_all'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_no_sugar_all=1":" t1.opt_no_sugar_all=1";
+ if($Data['opt_bio'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_bio=1":" t1.opt_bio=1";
+ if($Data['opt_vegan'] != 0)$Filter['query'] = ($Filter['query']!='')?$Filter['query']." AND t1.opt_vegan=1":" t1.opt_vegan=1";
+
  
  if($Data['tags'] != ''){
  $Tmp = explode(',',$Data['tags']);

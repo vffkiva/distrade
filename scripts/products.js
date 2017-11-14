@@ -99,13 +99,25 @@ var container = $('#id-products');
 var tags = [];
 var data = container.find('form').serializeJSON();
 data['action'] = 'actionGetProducts';
+data['opt_no_gluten'] = 0;
+data['opt_no_milk'] = 0;
+data['opt_no_eggs'] = 0;
+data['opt_no_sugar'] = 0;
+data['opt_no_sugar_all'] = 0;
+data['opt_bio'] = 0;
+data['opt_vegan'] = 0;
+
+    $.each(container.find('.sicon'), function(){
+        if($(this).hasClass('active'))data[$(this).attr('data-value')] = 1;
+    });
+
 
 	$.each(container.find('#id-tags > .message-item'), function(index, item){
 	tags.push($(this).find('span.text').html());
 	});
 
 data['Tags'] = tags.join(',');
-	
+
 	$.ajax({
 	data: data,
 	success: function(out){

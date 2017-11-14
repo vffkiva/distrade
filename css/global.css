@@ -584,3 +584,26 @@ color: white;
 	padding: 0 4px;
 	width: auto;
 }
+
+.sicons {display: inline-block; position: relative; top: 7px; margin-left: 10px;}
+.sicons > *:not(:first-child) {margin-left: 5px;}
+.sicon {
+display: inline-block;
+background-image: url(/img/allergens.png);
+background-repeat: no-repeat;
+background-color: #fff;
+width: 30px;
+height: 30px;
+cursor: pointer;
+/*border: 1px solid red;*/
+}
+
+.sicon.no-gluten {}
+.sicon.no-milk {background-position: -40px 0;}
+.sicon.no-eggs {background-position: -120px 0;}
+.sicon.no-sugar {background-position: -40px -95px;}
+.sicon.no-sugar-all {background-position: 0 -95px;}
+.sicon.bio {background-position: -120px -95px;}
+.sicon.vegan {background-position: -80px -95px;}
+
+.sicon.active {background-image: url(/img/allergens_active.png);}

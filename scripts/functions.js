@@ -180,9 +180,7 @@ var css = {
 var tmp = $('<div>aaa</div>');
 tmp.css(css);
 
-//opts['object'].parent().prepend(tmp);
-console.log(data);
-	
+
       opts['object'].hide() //Hide it
         .one('load', function() { //Set something to run when it finishes loading
           $(this).fadeIn(); //Fade it in when loaded

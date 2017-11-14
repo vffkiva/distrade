@@ -23,5 +23,13 @@ dialog = $('<div id="dialogs"></div>').appendTo('body');
 	$('#top .logo').bind('click', function(){window.location.href=vars['url'];});
 	$('.more-news > .link').bind('click', function(){window.location.href=vars['url']+'?_page=242';});
 	$('.action-button').button();
-	
+
+
+
+    $('body').on('click', '.sicon', function(){
+    $(this).toggleClass('active');
+    });
+
+
+
 	});
